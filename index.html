@@ -248,6 +248,12 @@
     <h1>Pi Places</h1>
     <p>دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
     <span class="badge">Pi Network Directory</span>
+    <div id="langSwitcher" style="margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+  <button type="button" data-lang="ar" class="cat-btn" style="background: #fff; color: #3f1c66; border: none; font-weight: 600;">العربية</button>
+  <button type="button" data-lang="en" class="cat-btn" style="background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.4);">English</button>
+  <button type="button" data-lang="zh" class="cat-btn" style="background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.4);">中文</button>
+    </div>
+    
   </header>
 
   <main class="container">
@@ -397,6 +403,190 @@ if ("serviceWorker" in navigator) {
       }
       
     render();
+    (function () {
+  const LANG_KEY = "pi_places_lang";
+  const translations = {
+    ar: {
+      dir: "rtl",
+      lang: "ar",
+      title: "Pi Places — دليل الأماكن الداعمة لـ Pi",
+      subtitle: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
+      badge: "Pi Network Directory",
+      searchPlaceholder: "ابحث باسم المتجر أو المدينة...",
+      cats: {
+        "الكل": "الكل",
+        "مطاعم ومقاهي": "مطاعم ومقاهي",
+        "إلكترونيات": "إلكترونيات",
+        "خدمات": "خدمات",
+        "المفضلة": "المفضلة"
+      },
+      addTitle: "إضافة مكان جديد إلى الدليل",
+      namePlaceholder: "اسم المتجر أو الخدمة",
+      cityPlaceholder: "المدينة أو المنطقة",
+      submitBtn: "إضافة إلى الدليل",
+      locationLabel: "الموقع:",
+      acceptsPi: "يقبل Pi",
+      saveBtn: "☆ حفظ",
+      savedBtn: "★ محفوظ",
+      emptyText: "لا توجد أماكن مطابقة للبحث أو التصنيف الحالي."
+    },
+    en: {
+      dir: "ltr",
+      lang: "en",
+      title: "Pi Places — Pi-Accepted Merchants Directory",
+      subtitle: "Directory of stores and services accepting Pi payment",
+      badge: "Pi Network Directory",
+      searchPlaceholder: "Search by store name or city...",
+      cats: {
+        "الكل": "All",
+        "مطاعم ومقاهي": "Food & Cafes",
+        "إلكترونيات": "Electronics",
+        "خدمات": "Services",
+        "المفضلة": "Favorites"
+      },
+      addTitle: "Add a New Place to the Directory",
+      namePlaceholder: "Store or service name",
+      cityPlaceholder: "City or area",
+      submitBtn: "Add to Directory",
+      locationLabel: "Location:",
+      acceptsPi: "Accepts Pi",
+      saveBtn: "☆ Save",
+      savedBtn: "★ Saved",
+      emptyText: "No places match the current search or filter."
+    },
+    zh: {
+      dir: "ltr",
+      lang: "zh-CN",
+      title: "Pi Places — 支持 Pi 支付的商家指南",
+      subtitle: "支持 Pi 支付的门店与服务目录",
+      badge: "Pi Network Directory",
+      searchPlaceholder: "按商家名称或城市搜索...",
+      cats: {
+        "الكل": "全部",
+        "مطاعم ومقاهي": "餐饮与咖啡",
+        "إلكترونيات": "电子产品",
+        "خدمات": "生活服务",
+        "المفضلة": "收藏夹"
+      },
+      addTitle: "添加新商家到目录",
+      namePlaceholder: "商家或服务名称",
+      cityPlaceholder: "城市或区域",
+      submitBtn: "添加到目录",
+      locationLabel: "位置：",
+      acceptsPi: "支持 Pi",
+      saveBtn: "☆ 收藏",
+      savedBtn: "★ 已收藏",
+      emptyText: "没有符合当前搜索或分类的商家。"
+    }
+  };
+
+  let currentLang = localStorage.getItem(LANG_KEY) || "ar";
+  if (!translations[currentLang]) currentLang = "ar";
+
+  function applyI18n() {
+    const t = translations[currentLang];
+    document.documentElement.lang = t.lang;
+    document.documentElement.dir = t.dir;
+    document.title = t.title;
+
+    const h1 = document.querySelector("header h1");
+    const p = document.querySelector("header p");
+    const badge = document.querySelector("header .badge");
+    if (h1) h1.textContent = "Pi Places";
+    if (p) p.textContent = t.subtitle;
+    if (badge) badge.textContent = t.badge;
+
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) searchInput.placeholder = t.searchPlaceholder;
+
+    document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
+      const catKey = btn.dataset.cat;
+      if (catKey && t.cats[catKey]) {
+        btn.textContent = t.cats[catKey];
+      }
+    });
+
+    const addTitle = document.querySelector(".add-box h3");
+    if (addTitle) addTitle.textContent = t.addTitle;
+
+    const placeName = document.getElementById("placeName");
+    const placeCity = document.getElementById("placeCity");
+    const placeCategory = document.getElementById("placeCategory");
+    const submitBtn = document.querySelector("#addPlaceForm .submit-btn");
+
+    if (placeName) placeName.placeholder = t.namePlaceholder;
+    if (placeCity) placeCity.placeholder = t.cityPlaceholder;
+    if (submitBtn) submitBtn.textContent = t.submitBtn;
+
+    if (placeCategory) {
+      Array.from(placeCategory.options).forEach((opt) => {
+        if (t.cats[opt.value]) {
+          opt.textContent = t.cats[opt.value];
+        }
+      });
+    }
+
+    document.querySelectorAll("#langSwitcher button[data-lang]").forEach((btn) => {
+      const active = btn.dataset.lang === currentLang;
+      btn.style.background = active ? "#fff" : "rgba(255,255,255,0.18)";
+      btn.style.color = active ? "#3f1c66" : "#fff";
+      btn.style.border = active ? "none" : "1px solid rgba(255,255,255,0.4)";
+      btn.style.fontWeight = active ? "700" : "600";
+    });
+  }
+
+  const origRender = typeof render === "function" ? render : null;
+  if (origRender) {
+    window.render = function () {
+      applyI18n();
+      origRender();
+      const t = translations[currentLang];
+      document.querySelectorAll("#placesGrid .card").forEach((card) => {
+        const tag = card.querySelector(".tag");
+        if (tag && t.cats[tag.textContent.trim()]) {
+          tag.textContent = t.cats[tag.textContent.trim()];
+        }
+        const meta = card.querySelector(".meta");
+        if (meta) {
+          meta.innerHTML = meta.innerHTML
+            .replace("الموقع:", t.locationLabel)
+            .replace("Location:", t.locationLabel)
+            .replace("位置：", t.locationLabel);
+        }
+        const piBadge = card.querySelector(".pi-accepted");
+        if (piBadge) piBadge.textContent = t.acceptsPi;
+
+        const favBtn = card.querySelector("button");
+        if (favBtn) {
+          const txt = favBtn.textContent.trim();
+          const isSaved = txt.startsWith("★");
+          favBtn.textContent = isSaved ? t.savedBtn : t.saveBtn;
+        }
+      });
+
+      const emptyEl = document.querySelector("#placesGrid .empty");
+      if (emptyEl) emptyEl.textContent = t.emptyText;
+    };
+  }
+
+  document.querySelectorAll("#langSwitcher button[data-lang]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentLang = btn.dataset.lang;
+      localStorage.setItem(LANG_KEY, currentLang);
+      if (typeof window.render === "function") {
+        window.render();
+      } else {
+        applyI18n();
+      }
+    });
+  });
+
+  applyI18n();
+  if (typeof window.render === "function") {
+    window.render();
+  }
+})();
+
   </script>
 </body>
   </html>
