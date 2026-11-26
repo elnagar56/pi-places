@@ -803,7 +803,7 @@
                   <div class="product-name">${prod.title}</div>
                   <div class="product-price">${prod.pricePi} Pi</div>
                 </div>
-                <button type="button" class="buy-pi-btn" data-pay-amount="${prod.pricePi}" data-pay-memo="${place.name} -${prod.title}">
+                <button type="button" class="buy-pi-btn" data-pay-amount="${prod.pricePi}" data-pay-memo="${place.name} - ${prod.title}">
                   ${t.payItemBtn}
                 </button>
               </div>
@@ -839,7 +839,8 @@
         const q = searchQuery.trim().toLowerCase();
         const matchesSearch =
           !q ||
-          p.name.toLowerCase().includes(q) ||          p.city.toLowerCase().includes(q) ||
+          p.name.toLowerCase().includes(q) ||
+          p.city.toLowerCase().includes(q) ||
           (p.address && p.address.toLowerCase().includes(q));
         return matchesCat && matchesSearch;
       });
@@ -1025,4 +1026,3 @@
   </script>
 </body>
 </html>
-
