@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#5c2d91" />
   <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <title>Pi Places — دليل الأماكن الداعمة لـ Pi</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
       --pi-purple: #5c2d91;
@@ -305,7 +307,6 @@
       border: 1px solid var(--border);
     }
 
-    /* نافذة التفاصيل */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -324,7 +325,7 @@
     .modal-box {
       background: var(--card);
       border-radius: 16px;
-      max-width: 520px;
+      max-width: 540px;
       width: 100%;
       max-height: 88vh;
       overflow-y: auto;
@@ -363,13 +364,34 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       font-size: 0.9rem;
+    }
+
+    .coords-text {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    #placeMap {
+      height: 190px;
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+
+    .map-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     .map-link {
       display: inline-block;
-      margin-top: 8px;
       background: var(--pi-purple);
       color: #fff;
       text-decoration: none;
@@ -377,6 +399,8 @@
       border-radius: 9px;
       font-size: 0.84rem;
       font-weight: 600;
+      border: none;
+      cursor: pointer;
     }
 
     .products-title {
@@ -466,6 +490,11 @@
         <div class="form-row">
           <input type="text" id="placeName" placeholder="اسم المكان" required />
           <input type="text" id="placeCity" placeholder="المدينة أو المنطقة" required />
+          <input type="text" id="placeAddress" placeholder="العنوان التفصيلي" />
+        </div>
+        <div class="form-row">
+          <input type="number" step="any" id="placeLat" placeholder="خط العرض (Lat) مثال: 31.3543" />
+          <input type="number" step="any" id="placeLng" placeholder="خط الطول (Lng) مثال: 27.2373" />
           <select id="placeCategory">
             <option value="مطاعم ومقاهي">مطاعم ومقاهي</option>
             <option value="إلكترونيات">إلكترونيات</option>
@@ -477,7 +506,6 @@
     </section>
   </main>
 
-  <!-- نافذة تفاصيل المكان -->
   <div class="modal-backdrop" id="placeModal" aria-hidden="true">
     <div class="modal-box" id="modalContent"></div>
   </div>
@@ -501,10 +529,14 @@
         addTitle: "إضافة مكان جديد إلى الدليل",
         namePlaceholder: "اسم المكان",
         cityPlaceholder: "المدينة أو المنطقة",
+        addressPlaceholder: "العنوان التفصيلي",
+        latPlaceholder: "خط العرض (Lat) مثال: 31.3543",
+        lngPlaceholder: "خط الطول (Lng) مثال: 27.2373",
         submitBtn: "إضافة المكان",
         locationLabel: "الموقع:",
         addressLabel: "العنوان التفصيلي:",
-        openMapBtn: "فتح الموقع على الخريطة",
+        coordsLabel: "الإحداثيات:",
+        openMapBtn: "فتح الإحداثيات في خرائط جوجل",
         productsTitle: "المنتجات والخدمات المعروضة",
         payItemBtn: "دفع بـ Pi",
         acceptsPi: "يقبل Pi",
@@ -532,10 +564,14 @@
         addTitle: "Add a New Place to the Directory",
         namePlaceholder: "Place name",
         cityPlaceholder: "City or area",
+        addressPlaceholder: "Detailed street address",
+        latPlaceholder: "Latitude (e.g. 31.3543)",
+        lngPlaceholder: "Longitude (e.g. 27.2373)",
         submitBtn: "Add Place",
         locationLabel: "Location:",
         addressLabel: "Full Address:",
-        openMapBtn: "Open on Map",
+        coordsLabel: "Coordinates:",
+        openMapBtn: "Open Coordinates in Google Maps",
         productsTitle: "Available Products & Services",
         payItemBtn: "Pay with Pi",
         acceptsPi: "Accepts Pi",
@@ -563,10 +599,14 @@
         addTitle: "添加新商家到目录",
         namePlaceholder: "商家名称",
         cityPlaceholder: "城市或区域",
+        addressPlaceholder: "详细街道地址",
+        latPlaceholder: "纬度 (如 31.3543)",
+        lngPlaceholder: "经度 (如 27.2373)",
         submitBtn: "添加商家",
         locationLabel: "位置：",
         addressLabel: "详细地址：",
-        openMapBtn: "在地图中打开",
+        coordsLabel: "坐标：",
+        openMapBtn: "在谷歌地图中打开坐标",
         productsTitle: "提供的商品与服务",
         payItemBtn: "使用 Pi 支付",
         acceptsPi: "支持 Pi",
@@ -586,8 +626,9 @@
         name: "واحة البن للقهوة",
         city: "القاهرة",
         address: "المعادي، شارع 9، بجوار محطة المترو",
+        lat: 29.9602,
+        lng: 31.2569,
         category: "مطاعم ومقاهي",
-        mapQuery: "Maadi Street 9 Cairo",
         products: [
           { title: "قهوة عربية مختصة", pricePi: 0.5 },
           { title: "إسبريسو مزدوج + كرواسون", pricePi: 0.8 }
@@ -598,8 +639,9 @@
         name: "تك زون للصيانة",
         city: "الإسكندرية",
         address: "سموحة، شارع فوزي معاذ، برج النصر",
+        lat: 31.2156,
+        lng: 29.9553,
         category: "إلكترونيات",
-        mapQuery: "Smouha Fawzy Moaz Alexandria",
         products: [
           { title: "فحص وتشخيص أعطال الهواتف", pricePi: 1.0 },
           { title: "شاحن سريع أصلي", pricePi: 1.5 }
@@ -610,8 +652,9 @@
         name: "ركن الساحل للمأكولات",
         city: "مرسى مطروح",
         address: "كورنيش مرسى مطروح، أمام شاطئ البسنت",
+        lat: 31.3543,
+        lng: 27.2373,
         category: "مطاعم ومقاهي",
-        mapQuery: "Marsa Matruh Corniche",
         products: [
           { title: "وجبة أسماك بحرية مشوية", pricePi: 2.5 },
           { title: "عصير ليمون بالنعناع طازج", pricePi: 0.4 }
@@ -622,8 +665,9 @@
         name: "استوديو تصميم ويب",
         city: "الجيزة",
         address: "الدقي، شارع التحرير، الدور الثالث",
+        lat: 30.0385,
+        lng: 31.2127,
         category: "خدمات",
-        mapQuery: "Dokki El Tahrir Street Giza",
         products: [
           { title: "تصميم صفحة تعريفية متجاوبة", pricePi: 5.0 },
           { title: "استشارة ربط تطبيق ويب بـ Pi", pricePi: 3.0 }
@@ -631,7 +675,7 @@
       }
     ];
 
-    let places = JSON.parse(localStorage.getItem("pi_places_data") || "null") || defaultPlaces;
+    let places = JSON.parse(localStorage.getItem("pi_places_data_v2") || "null") || defaultPlaces;
     let favorites = JSON.parse(localStorage.getItem("pi_places_favs") || "[]");
     let activeCategory = "الكل";
     let searchQuery = "";
@@ -639,6 +683,7 @@
     if (!i18n[currentLang]) currentLang = "ar";
     let piUser = null;
     let selectedPlaceId = null;
+    let leafletMap = null;
 
     const gridEl = document.getElementById("placesGrid");
     const searchEl = document.getElementById("searchInput");
@@ -652,7 +697,7 @@
     const modalContentEl = document.getElementById("modalContent");
 
     function saveState() {
-      localStorage.setItem("pi_places_data", JSON.stringify(places));
+      localStorage.setItem("pi_places_data_v2", JSON.stringify(places));
       localStorage.setItem("pi_places_favs", JSON.stringify(favorites));
       localStorage.setItem(LANG_KEY, currentLang);
     }
@@ -667,6 +712,9 @@
       document.getElementById("addBoxTitle").textContent = t.addTitle;
       document.getElementById("placeName").placeholder = t.namePlaceholder;
       document.getElementById("placeCity").placeholder = t.cityPlaceholder;
+      document.getElementById("placeAddress").placeholder = t.addressPlaceholder;
+      document.getElementById("placeLat").placeholder = t.latPlaceholder;
+      document.getElementById("placeLng").placeholder = t.lngPlaceholder;
       document.getElementById("submitPlaceBtn").textContent = t.submitBtn;
       piLoginBtn.textContent = t.piLogin;
       piTestPayBtn.textContent = t.piPay;
@@ -692,6 +740,25 @@
       });
     }
 
+    function initLeafletMap(lat, lng, title) {
+      if (leafletMap) {
+        leafletMap.remove();
+        leafletMap = null;
+      }
+      const mapContainer = document.getElementById("placeMap");
+      if (!mapContainer || !window.L) return;
+
+      leafletMap = L.map("placeMap").setView([lat, lng], 15);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap"
+      }).addTo(leafletMap);
+
+      L.marker([lat, lng]).addTo(leafletMap).bindPopup(title).openPopup();
+      setTimeout(() => {
+        if (leafletMap) leafletMap.invalidateSize();
+      }, 150);
+    }
+
     function openPlaceModal(placeId) {
       const place = places.find((item) => item.id === placeId);
       if (!place) return;
@@ -699,8 +766,9 @@
       const t = i18n[currentLang];
       const catLabel = t.cats[place.category] || place.category;
       const addressText = place.address || place.city;
-      const mapQuery = encodeURIComponent(place.mapQuery || `${place.name} ${place.city}`);
-      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+      const lat = Number(place.lat) || 30.0444;
+      const lng = Number(place.lng) || 31.2357;
+      const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       const products = Array.isArray(place.products) && place.products.length
         ? place.products
         : [{ title: place.name, pricePi: 0.5 }];
@@ -717,20 +785,25 @@
         <div class="address-box">
           <div><strong>${t.locationLabel}</strong> ${place.city}</div>
           <div><strong>${t.addressLabel}</strong> ${addressText}</div>
-          <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">${t.openMapBtn}</a>
+          <div class="coords-text"><strong>${t.coordsLabel}</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+          <div class="map-actions">
+            <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">${t.openMapBtn}</a>
+          </div>
         </div>
+
+        <div id="placeMap"></div>
 
         <div class="products-title">${t.productsTitle}</div>
         <div>
           ${products
             .map(
-              (prod, idx) => `
+              (prod) => `
               <div class="product-item">
                 <div>
                   <div class="product-name">${prod.title}</div>
                   <div class="product-price">${prod.pricePi} Pi</div>
                 </div>
-                <button type="button" class="buy-pi-btn" data-pay-amount="${prod.pricePi}" data-pay-memo="${place.name} - ${prod.title}">
+                <button type="button" class="buy-pi-btn" data-pay-amount="${prod.pricePi}" data-pay-memo="${place.name} -${prod.title}">
                   ${t.payItemBtn}
                 </button>
               </div>
@@ -742,10 +815,15 @@
 
       modalEl.classList.add("open");
       modalEl.setAttribute("aria-hidden", "false");
+      initLeafletMap(lat, lng, place.name);
     }
 
     function closePlaceModal() {
       selectedPlaceId = null;
+      if (leafletMap) {
+        leafletMap.remove();
+        leafletMap = null;
+      }
       modalEl.classList.remove("open");
       modalEl.setAttribute("aria-hidden", "true");
     }
@@ -762,185 +840,3 @@
         const matchesSearch =
           !q ||
           p.name.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          (p.address && p.address.toLowerCase().includes(q));
-        return matchesCat && matchesSearch;
-      });
-
-      if (!filtered.length) {
-        gridEl.innerHTML = `<div class="empty">${t.emptyText}</div>`;
-        return;
-      }
-
-      gridEl.innerHTML = filtered
-        .map((place) => {
-          const isFav = favorites.includes(place.id);
-          const catLabel = t.cats[place.category] || place.category;
-          return `
-            <article class="card" data-place-id="${place.id}">
-              <div>
-                <div class="card-top">
-                  <h2>${place.name}</h2>
-                  <span class="tag">${catLabel}</span>
-                </div>
-                <p class="meta">${t.locationLabel} ${place.city}</p>
-              </div>
-              <div class="card-actions">
-                <span class="pi-accepted">${t.acceptsPi}</span>
-                <button type="button" class="fav-btn ${isFav ? "saved" : ""}" data-fav-id="${place.id}">
-                  ${isFav ? t.savedBtn : t.saveBtn}
-                </button>
-              </div>
-            </article>
-          `;
-        })
-        .join("");
-
-      if (selectedPlaceId !== null) {
-        openPlaceModal(selectedPlaceId);
-      }
-    }
-
-    async function triggerPiPayment(amount, memo) {
-      if (!window.Pi) {
-        alert("افتح التطبيق داخل Pi Browser لإتمام الدفع بعملة Pi.");
-        return;
-      }
-      try {
-        await window.Pi.createPayment(
-          {
-            amount: Number(amount),
-            memo: memo,
-            metadata: { app: "pi-places", item: memo }
-          },
-          {
-            onReadyForServerApproval: function (paymentId) {
-              console.log("Ready for approval:", paymentId);
-            },
-            onReadyForServerCompletion: function (paymentId, txid) {
-              console.log("Ready for completion:", paymentId, txid);
-              alert("تمت عملية الدفع بـ Pi بنجاح!");
-            },
-            onCancel: function () {
-              alert("تم إلغاء عملية الدفع.");
-            },
-            onError: function (error) {
-              alert("حدث خطأ أثناء الدفع: " + error.message);
-            }
-          }
-        );
-      } catch (err) {
-        alert("تعذر بدء الدفع: " + (err && err.message ? err.message : err));
-      }
-    }
-
-    gridEl.addEventListener("click", (e) => {
-      const favBtn = e.target.closest("[data-fav-id]");
-      if (favBtn) {
-        e.stopPropagation();
-        const id = Number(favBtn.dataset.favId);
-        if (favorites.includes(id)) {
-          favorites = favorites.filter((item) => item !== id);
-        } else {
-          favorites.push(id);
-        }
-        saveState();
-        render();
-        return;
-      }
-
-      const card = e.target.closest("[data-place-id]");
-      if (card) {
-        openPlaceModal(Number(card.dataset.placeId));
-      }
-    });
-
-    modalEl.addEventListener("click", (e) => {
-      if (e.target === modalEl || e.target.closest("#closeModalBtn")) {
-        closePlaceModal();
-        return;
-      }
-      const payBtn = e.target.closest("[data-pay-amount]");
-      if (payBtn) {
-        const amount = payBtn.dataset.payAmount;
-        const memo = payBtn.dataset.payMemo;
-        triggerPiPayment(amount, memo);
-      }
-    });
-
-    langBarEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".lang-btn");
-      if (!btn) return;
-      currentLang = btn.dataset.lang;
-      saveState();
-      render();
-    });
-
-    catBarEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".cat-btn");
-      if (!btn) return;
-      document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeCategory = btn.dataset.cat;
-      render();
-    });
-
-    searchEl.addEventListener("input", (e) => {
-      searchQuery = e.target.value;
-      render();
-    });
-
-    formEl.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const name = document.getElementById("placeName").value.trim();
-      const city = document.getElementById("placeCity").value.trim();
-      const category = document.getElementById("placeCategory").value;
-      if (!name || !city) return;
-
-      places.unshift({
-        id: Date.now(),
-        name,
-        city,
-        address: city,
-        category,
-        mapQuery: `${name} ${city}`,
-        products: [{ title: name, pricePi: 0.5 }]
-      });
-      saveState();
-      formEl.reset();
-      render();
-    });
-
-    if (window.Pi) {
-      window.Pi.init({ version: "2.0", sandbox: true });
-    }
-
-    piLoginBtn.addEventListener("click", async () => {
-      if (!window.Pi) {
-        alert("افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.");
-        return;
-      }
-      try {
-        const scopes = ["username", "payments"];
-        const auth = await window.Pi.authenticate(scopes, () => {});
-        piUser = auth.user;
-        render();
-      } catch (err) {
-        alert("تعذر تسجيل الدخول عبر Pi: " + (err && err.message ? err.message : err));
-      }
-    });
-
-    piTestPayBtn.addEventListener("click", () => {
-      triggerPiPayment(0.01, "Pi Places Test Payment");
-    });
-
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
-      });
-    }
-
-    render();
-  </script>
-</body>
-</html>
