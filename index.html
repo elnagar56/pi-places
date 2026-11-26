@@ -3,1009 +3,124 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#5c2d91" />
-  <link rel="manifest" href="./manifest.json" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <title>Pi Places — دليل الأماكن الداعمة لـ Pi</title>
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <title>Pi Places</title>
   <style>
-    :root {
-      --pi-purple: #5c2d91;
-      --pi-purple-dark: #3f1c66;
-      --pi-gold: #f5b700;
-      --bg: #f6f4fa;
-      --card: #ffffff;
-      --text: #1e1b2e;
-      --muted: #66617a;
-      --border: #e4dff0;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      padding-bottom: 48px;
-    }
-
-    header {
-      background: linear-gradient(135deg, var(--pi-purple-dark), var(--pi-purple));
-      color: #fff;
-      padding: 22px 16px 28px;
-      text-align: center;
-      box-shadow: 0 4px 16px rgba(63, 28, 102, 0.2);
-    }
-
-    header h1 {
-      font-size: 1.6rem;
-      margin-bottom: 4px;
-    }
-
-    header p {
-      font-size: 0.92rem;
-      opacity: 0.92;
-    }
-
-    .badge {
-      display: inline-block;
-      margin-top: 8px;
-      background: rgba(245, 183, 0, 0.2);
-      color: var(--pi-gold);
-      border: 1px solid rgba(245, 183, 0, 0.5);
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
-
-    .lang-bar {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .lang-btn {
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      background: rgba(255, 255, 255, 0.18);
-      color: #fff;
-      padding: 5px 12px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .lang-btn.active {
-      background: #fff;
-      color: var(--pi-purple-dark);
-      border-color: #fff;
-      font-weight: 700;
-    }
-
-    .pi-bar {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .pi-btn {
-      background: var(--pi-gold);
-      color: #1e1b2e;
-      border: none;
-      padding: 7px 14px;
-      border-radius: 999px;
-      font-size: 0.84rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .pi-btn.secondary {
-      background: #ffffff;
-      color: var(--pi-purple-dark);
-    }
-
-    .pi-status {
-      font-size: 0.8rem;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
-
-    .container {
-      max-width: 820px;
-      margin: -14px auto 0;
-      padding: 0 14px;
-    }
-
-    .controls {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      box-shadow: 0 6px 20px rgba(30, 27, 46, 0.06);
-      margin-bottom: 16px;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 11px 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.95rem;
-      outline: none;
-      margin-bottom: 12px;
-    }
-
-    .search-input:focus {
-      border-color: var(--pi-purple);
-    }
-
-    .categories {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .cat-btn {
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 0.84rem;
-      cursor: pointer;
-    }
-
-    .cat-btn.active {
-      background: var(--pi-purple);
-      color: #fff;
-      border-color: var(--pi-purple);
-      font-weight: 600;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 18px rgba(63, 28, 102, 0.08);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    .card h2 {
-      font-size: 1.05rem;
-      color: var(--pi-purple-dark);
-    }
-
-    .tag {
-      background: #efeaf8;
-      color: var(--pi-purple);
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 8px;
-      white-space: nowrap;
-      font-weight: 600;
-    }
-
-    .meta {
-      font-size: 0.86rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    .card-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
-
-    .pi-accepted {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #16794c;
-    }
-
-    .fav-btn {
-      border: 1px solid var(--border);
-      background: #fff;
-      padding: 5px 10px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    .fav-btn.saved {
-      background: #fff8e1;
-      border-color: var(--pi-gold);
-      color: #8a6200;
-      font-weight: 600;
-    }
-
-    .add-box {
-      margin-top: 20px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-    }
-
-    .add-box h3 {
-      font-size: 1rem;
-      margin-bottom: 10px;
-      color: var(--pi-purple-dark);
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .form-row input,
-    .form-row select {
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.9rem;
-      background: #fff;
-    }
-
-    .submit-btn {
-      background: var(--pi-purple);
-      color: #fff;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 28px;
-      color: var(--muted);
-      background: var(--card);
-      border-radius: 14px;
-      border: 1px solid var(--border);
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(20, 14, 34, 0.65);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      z-index: 999;
-    }
-
-    .modal-backdrop.open {
-      display: flex;
-    }
-
-    .modal-box {
-      background: var(--card);
-      border-radius: 16px;
-      max-width: 540px;
-      width: 100%;
-      max-height: 88vh;
-      overflow-y: auto;
-      padding: 20px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-
-    .modal-header h2 {
-      font-size: 1.2rem;
-      color: var(--pi-purple-dark);
-    }
-
-    .close-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 4px 10px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .address-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-      font-size: 0.9rem;
-    }
-
-    .coords-text {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-
-    #placeMap {
-      height: 190px;
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      margin-bottom: 12px;
-      z-index: 1;
-    }
-
-    .map-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .map-link {
-      display: inline-block;
-      background: var(--pi-purple);
-      color: #fff;
-      text-decoration: none;
-      padding: 7px 14px;
-      border-radius: 9px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-    }
-
-    .products-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--pi-purple-dark);
-      margin-bottom: 8px;
-    }
-
-    .product-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 8px;
-      background: #fcfbfe;
-    }
-
-    .product-name {
-      font-weight: 600;
-      font-size: 0.92rem;
-    }
-
-    .product-price {
-      font-size: 0.84rem;
-      color: #16794c;
-      font-weight: 700;
-    }
-
-    .buy-pi-btn {
-      background: var(--pi-gold);
-      color: #1e1b2e;
-      border: none;
-      padding: 6px 11px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, Tahoma, Arial, sans-serif; }
+    body { background: #f6f4fa; color: #1e1b2e; padding-bottom: 40px; }
+    header { background: #3f1c66; color: #fff; padding: 18px 14px; text-align: center; }
+    .bar { margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    button { cursor: pointer; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; }
+    .gold { background: #f5b700; color: #1e1b2e; }
+    .white { background: #fff; color: #3f1c66; }
+    .purple { background: #5c2d91; color: #fff; }
+    #debugBox { margin: 12px auto; max-width: 780px; background: #fff3cd; color: #5c3c00; border: 1px solid #f5b700; padding: 10px 14px; border-radius: 10px; font-size: 0.9rem; }
+    .wrap { max-width: 780px; margin: 12px auto; padding: 0 12px; }
+    .card { background: #fff; border: 1px solid #e4dff0; border-radius: 12px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); align-items: center; justify-content: center; padding: 14px; z-index: 999; }
+    #modal.open { display: flex; }
+    #modalBox { background: #fff; border-radius: 14px; max-width: 480px; width: 100%; padding: 18px; }
+    .item { display: flex; justify-content: space-between; align-items: center; border: 1px solid #e4dff0; border-radius: 8px; padding: 10px; margin-top: 8px; }
   </style>
 </head>
 <body>
   <header>
     <h1>Pi Places</h1>
-    <p id="subtitleText">دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
-    <span class="badge">Pi Network Directory</span>
-
-    <div class="lang-bar" id="langSwitcher">
-      <button type="button" class="lang-btn active" data-lang="ar">العربية</button>
-      <button type="button" class="lang-btn" data-lang="en">English</button>
-      <button type="button" class="lang-btn" data-lang="zh">中文</button>
-    </div>
-
-    <div class="pi-bar">
-      <button type="button" class="pi-btn" id="piLoginBtn">دخول بحساب Pi</button>
-      <button type="button" class="pi-btn secondary" id="piTestPayBtn">تجربة دفع 0.01 Pi</button>
-      <span class="pi-status" id="piStatusText">غير متصل بـ Pi</span>
+    <div class="bar">
+      <button type="button" class="gold" id="loginBtn">دخول بحساب Pi</button>
+      <button type="button" class="white" id="testPayBtn">تجربة دفع 0.01 Pi</button>
     </div>
   </header>
 
-  <main class="container">
-    <section class="controls">
-      <input
-        id="searchInput"
-        class="search-input"
-        type="text"
-        placeholder="ابحث باسم المتجر أو المدينة..."
-      />
-      <div class="categories" id="categoryBar">
-        <button type="button" class="cat-btn active" data-cat="الكل">الكل</button>
-        <button type="button" class="cat-btn" data-cat="مطاعم ومقاهي">مطاعم ومقاهي</button>
-        <button type="button" class="cat-btn" data-cat="إلكترونيات">إلكترونيات</button>
-        <button type="button" class="cat-btn" data-cat="خدمات">خدمات</button>
-        <button type="button" class="cat-btn" data-cat="مفضلة">المفضلة</button>
-      </div>
-    </section>
+  <div id="debugBox">جاهز — اضغط على أي زر أو متجر لاختبار الاستجابة.</div>
+  <div class="wrap" id="list"></div>
 
-    <section class="grid" id="placesGrid"></section>
-
-    <section class="add-box">
-      <h3 id="addBoxTitle">إضافة مكان جديد إلى الدليل</h3>
-      <form id="addPlaceForm">
-        <div class="form-row">
-          <input type="text" id="placeName" placeholder="اسم المكان" required />
-          <input type="text" id="placeCity" placeholder="المدينة أو المنطقة" required />
-          <input type="text" id="placeAddress" placeholder="العنوان التفصيلي" />
-        </div>
-        <div class="form-row">
-          <input type="number" step="any" id="placeLat" placeholder="خط العرض (Lat) مثال: 31.3543" />
-          <input type="number" step="any" id="placeLng" placeholder="خط الطول (Lng) مثال: 27.2373" />
-          <select id="placeCategory">
-            <option value="مطاعم ومقاهي">مطاعم ومقاهي</option>
-            <option value="إلكترونيات">إلكترونيات</option>
-            <option value="خدمات">خدمات</option>
-          </select>
-        </div>
-        <button type="submit" class="submit-btn" id="submitPlaceBtn">إضافة المكان</button>
-      </form>
-    </section>
-  </main>
-
-  <div class="modal-backdrop" id="placeModal" aria-hidden="true">
-    <div class="modal-box" id="modalContent"></div>
+  <div id="modal">
+    <div id="modalBox"></div>
   </div>
 
   <script>
-    const LANG_KEY = "pi_places_lang";
-    const i18n = {
-      ar: {
-        dir: "rtl",
-        lang: "ar",
-        title: "Pi Places — دليل الأماكن الداعمة لـ Pi",
-        subtitle: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
-        searchPlaceholder: "ابحث باسم المتجر أو المدينة...",
-        cats: {
-          "الكل": "الكل",
-          "مطاعم ومقاهي": "مطاعم ومقاهي",
-          "إلكترونيات": "إلكترونيات",
-          "خدمات": "خدمات",
-          "مفضلة": "المفضلة"
-        },
-        addTitle: "إضافة مكان جديد إلى الدليل",
-        namePlaceholder: "اسم المكان",
-        cityPlaceholder: "المدينة أو المنطقة",
-        addressPlaceholder: "العنوان التفصيلي",
-        latPlaceholder: "خط العرض (Lat) مثال: 31.3543",
-        lngPlaceholder: "خط الطول (Lng) مثال: 27.2373",
-        submitBtn: "إضافة المكان",
-        locationLabel: "الموقع:",
-        addressLabel: "العنوان التفصيلي:",
-        coordsLabel: "الإحداثيات:",
-        openMapBtn: "فتح الإحداثيات في خرائط جوجل",
-        productsTitle: "المنتجات والخدمات المعروضة",
-        payItemBtn: "دفع بـ Pi",
-        acceptsPi: "يقبل Pi",
-        saveBtn: "☆ حفظ",
-        savedBtn: "★ محفوظ",
-        emptyText: "لا توجد أماكن مطابقة للبحث الحالي.",
-        piLogin: "دخول بحساب Pi",
-        piPay: "تجربة دفع 0.01 Pi",
-        piDisconnected: "غير متصل بـ Pi",
-        piConnected: "مرحباً: "
-      },
-      en: {
-        dir: "ltr",
-        lang: "en",
-        title: "Pi Places — Pi-Accepted Merchants Directory",
-        subtitle: "Directory of stores and services accepting Pi payment",
-        searchPlaceholder: "Search by store name or city...",
-        cats: {
-          "الكل": "All",
-          "مطاعم ومقاهي": "Food & Cafes",
-          "إلكترونيات": "Electronics",
-          "خدمات": "Services",
-          "مفضلة": "Favorites"
-        },
-        addTitle: "Add a New Place to the Directory",
-        namePlaceholder: "Place name",
-        cityPlaceholder: "City or area",
-        addressPlaceholder: "Detailed street address",
-        latPlaceholder: "Latitude (e.g. 31.3543)",
-        lngPlaceholder: "Longitude (e.g. 27.2373)",
-        submitBtn: "Add Place",
-        locationLabel: "Location:",
-        addressLabel: "Full Address:",
-        coordsLabel: "Coordinates:",
-        openMapBtn: "Open Coordinates in Google Maps",
-        productsTitle: "Available Products & Services",
-        payItemBtn: "Pay with Pi",
-        acceptsPi: "Accepts Pi",
-        saveBtn: "☆ Save",
-        savedBtn: "★ Saved",
-        emptyText: "No places match the current search.",
-        piLogin: "Sign in with Pi",
-        piPay: "Test Pay 0.01 Pi",
-        piDisconnected: "Not connected to Pi",
-        piConnected: "Hi: "
-      },
-      zh: {
-        dir: "ltr",
-        lang: "zh-CN",
-        title: "Pi Places — 支持 Pi 支付的商家指南",
-        subtitle: "支持 Pi 支付的门店与服务目录",
-        searchPlaceholder: "按商家名称或城市搜索...",
-        cats: {
-          "الكل": "全部",
-          "مطاعم ومقاهي": "餐饮与咖啡",
-          "إلكترونيات": "电子产品",
-          "خدمات": "生活服务",
-          "مفضلة": "收藏夹"
-        },
-        addTitle: "添加新商家到目录",
-        namePlaceholder: "商家名称",
-        cityPlaceholder: "城市或区域",
-        addressPlaceholder: "详细街道地址",
-        latPlaceholder: "纬度 (如 31.3543)",
-        lngPlaceholder: "经度 (如 27.2373)",
-        submitBtn: "添加商家",
-        locationLabel: "位置：",
-        addressLabel: "详细地址：",
-        coordsLabel: "坐标：",
-        openMapBtn: "在谷歌地图中打开坐标",
-        productsTitle: "提供的商品与服务",
-        payItemBtn: "使用 Pi 支付",
-        acceptsPi: "支持 Pi",
-        saveBtn: "☆ 收藏",
-        savedBtn: "★ 已收藏",
-        emptyText: "没有符合当前搜索的商家。",
-        piLogin: "使用 Pi 登录",
-        piPay: "测试支付 0.01 Pi",
-        piDisconnected: "未连接 Pi",
-        piConnected: "你好："
-      }
+    const debugBox = document.getElementById("debugBox");
+    const listEl = document.getElementById("list");
+    const modalEl = document.getElementById("modal");
+    const modalBox = document.getElementById("modalBox");
+
+    function logMsg(msg) {
+      debugBox.textContent = msg;
+    }
+
+    window.onerror = function (msg, url, line) {
+      logMsg("خطأ برمجي: " + msg + " (سطر " + line + ")");
     };
 
-    const defaultPlaces = [
-      {
-        id: 1,
-        name: "واحة البن للقهوة",
-        city: "القاهرة",
-        address: "المعادي، شارع 9، بجوار محطة المترو",
-        lat: 29.9602,
-        lng: 31.2569,
-        category: "مطاعم ومقاهي",
-        products: [
-          { title: "قهوة عربية مختصة", pricePi: 0.5 },
-          { title: "إسبريسو مزدوج + كرواسون", pricePi: 0.8 }
-        ]
-      },
-      {
-        id: 2,
-        name: "تك زون للصيانة",
-        city: "الإسكندرية",
-        address: "سموحة، شارع فوزي معاذ، برج النصر",
-        lat: 31.2156,
-        lng: 29.9553,
-        category: "إلكترونيات",
-        products: [
-          { title: "فحص وتشخيص أعطال الهواتف", pricePi: 1.0 },
-          { title: "شاحن سريع أصلي", pricePi: 1.5 }
-        ]
-      },
-      {
-        id: 3,
-        name: "ركن الساحل للمأكولات",
-        city: "مرسى مطروح",
-        address: "كورنيش مرسى مطروح، أمام شاطئ البسنت",
-        lat: 31.3543,
-        lng: 27.2373,
-        category: "مطاعم ومقاهي",
-        products: [
-          { title: "وجبة أسماك بحرية مشوية", pricePi: 2.5 },
-          { title: "عصير ليمون بالنعناع طازج", pricePi: 0.4 }
-        ]
-      },
-      {
-        id: 4,
-        name: "استوديو تصميم ويب",
-        city: "الجيزة",
-        address: "الدقي، شارع التحرير، الدور الثالث",
-        lat: 30.0385,
-        lng: 31.2127,
-        category: "خدمات",
-        products: [
-          { title: "تصميم صفحة تعريفية متجاوبة", pricePi: 5.0 },
-          { title: "استشارة ربط تطبيق ويب بـ Pi", pricePi: 3.0 }
-        ]
-      }
+    const places = [
+      { id: 1, name: "واحة البن للقهوة", city: "القاهرة", price: 0.5, item: "قهوة عربية مختصة" },
+      { id: 2, name: "تك زون للصيانة", city: "الإسكندرية", price: 1.0, item: "فحص وتشخيص أعطال الهواتف" },
+      { id: 3, name: "ركن الساحل للمأكولات", city: "مرسى مطروح", price: 2.5, item: "وجبة أسماك بحرية مشوية" }
     ];
 
-    let places = JSON.parse(localStorage.getItem("pi_places_data_v2") || "null") || defaultPlaces;
-    let favorites = JSON.parse(localStorage.getItem("pi_places_favs") || "[]");
-    let activeCategory = "الكل";
-    let searchQuery = "";
-    let currentLang = localStorage.getItem(LANG_KEY) || "ar";
-    if (!i18n[currentLang]) currentLang = "ar";
-    let piUser = null;
-    let selectedPlaceId = null;
-    let leafletMap = null;
-
-    const gridEl = document.getElementById("placesGrid");
-    const searchEl = document.getElementById("searchInput");
-    const catBarEl = document.getElementById("categoryBar");
-    const langBarEl = document.getElementById("langSwitcher");
-    const formEl = document.getElementById("addPlaceForm");
-    const piLoginBtn = document.getElementById("piLoginBtn");
-    const piTestPayBtn = document.getElementById("piTestPayBtn");
-    const piStatusText = document.getElementById("piStatusText");
-    const modalEl = document.getElementById("placeModal");
-    const modalContentEl = document.getElementById("modalContent");
-
-    function saveState() {
-      localStorage.setItem("pi_places_data_v2", JSON.stringify(places));
-      localStorage.setItem("pi_places_favs", JSON.stringify(favorites));
-      localStorage.setItem(LANG_KEY, currentLang);
-    }
-
-    function applyStaticTexts() {
-      const t = i18n[currentLang];
-      document.documentElement.lang = t.lang;
-      document.documentElement.dir = t.dir;
-      document.title = t.title;
-      document.getElementById("subtitleText").textContent = t.subtitle;
-      searchEl.placeholder = t.searchPlaceholder;
-      document.getElementById("addBoxTitle").textContent = t.addTitle;
-      document.getElementById("placeName").placeholder = t.namePlaceholder;
-      document.getElementById("placeCity").placeholder = t.cityPlaceholder;
-      document.getElementById("placeAddress").placeholder = t.addressPlaceholder;
-      document.getElementById("placeLat").placeholder = t.latPlaceholder;
-      document.getElementById("placeLng").placeholder = t.lngPlaceholder;
-      document.getElementById("submitPlaceBtn").textContent = t.submitBtn;
-      piLoginBtn.textContent = t.piLogin;
-      piTestPayBtn.textContent = t.piPay;
-
-      if (piUser && piUser.username) {
-        piStatusText.textContent = t.piConnected + piUser.username;
-      } else {
-        piStatusText.textContent = t.piDisconnected;
-      }
-
-      document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
-        const key = btn.dataset.cat;
-        if (t.cats[key]) btn.textContent = t.cats[key];
-      });
-
-      const selectEl = document.getElementById("placeCategory");
-      Array.from(selectEl.options).forEach((opt) => {
-        if (t.cats[opt.value]) opt.textContent = t.cats[opt.value];
-      });
-
-      document.querySelectorAll("#langSwitcher .lang-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.lang === currentLang);
-      });
-    }
-
-    function initLeafletMap(lat, lng, title) {
-      if (leafletMap) {
-        leafletMap.remove();
-        leafletMap = null;
-      }
-      const mapContainer = document.getElementById("placeMap");
-      if (!mapContainer || !window.L) return;
-
-      try {
-        leafletMap = L.map("placeMap").setView([lat, lng], 15);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap"
-        }).addTo(leafletMap);
-
-        L.marker([lat, lng]).addTo(leafletMap).bindPopup(title).openPopup();
-        setTimeout(() => {
-          if (leafletMap) leafletMap.invalidateSize();
-        }, 150);
-      } catch (e) {
-        console.warn("Map init skipped:", e);
-      }
-    }
-
-    function openPlaceModal(placeId, shouldInitMap = true) {
-      const place = places.find((item) => item.id === placeId);
-      if (!place) return;
-      selectedPlaceId = placeId;
-      const t = i18n[currentLang];
-      const catLabel = t.cats[place.category] || place.category;
-      const addressText = place.address || place.city;
-      const lat = Number(place.lat) || 30.0444;
-      const lng = Number(place.lng) || 31.2357;
-      const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-      const products = Array.isArray(place.products) && place.products.length
-        ? place.products
-        : [{ title: place.name, pricePi: 0.5 }];
-
-      modalContentEl.innerHTML = `
-        <div class="modal-header">
-          <div>
-            <h2>${place.name}</h2>
-            <span class="tag">${catLabel}</span>
-          </div>
-          <button type="button" class="close-btn" id="closeModalBtn">✕</button>
-        </div>
-
-        <div class="address-box">
-          <div><strong>${t.locationLabel}</strong> ${place.city}</div>
-          <div><strong>${t.addressLabel}</strong> ${addressText}</div>
-          <div class="coords-text"><strong>${t.coordsLabel}</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
-          <div class="map-actions">
-            <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">${t.openMapBtn}</a>
-          </div>
-        </div>
-
-        <div id="placeMap"></div>
-
-        <div class="products-title">${t.productsTitle}</div>
+    listEl.innerHTML = places.map(p => `
+      <div class="card" data-id="${p.id}">
         <div>
-          ${products
-            .map(
-              (prod) => `
-              <div class="product-item">
-                <div>
-                  <div class="product-name">${prod.title}</div>
-                  <div class="product-price">${prod.pricePi} Pi</div>
-                </div>
-                <button type="button" class="buy-pi-btn" data-pay-amount="${prod.pricePi}" data-pay-memo="${place.name} - ${prod.title}">
-                  ${t.payItemBtn}
-                </button>
-              </div>
-            `
-            )
-            .join("")}
+          <strong>${p.name}</strong>
+          <div>الموقع: ${p.city}</div>
+        </div>
+        <button type="button" class="purple open-btn" data-id="${p.id}">فتح المنتجات</button>
+      </div>
+    `).join("");
+
+    listEl.addEventListener("click", (e) => {
+      const target = e.target.closest("[data-id]");
+      if (!target) return;
+      const id = Number(target.dataset.id);
+      const p = places.find(x => x.id === id);
+      if (!p) return;
+      logMsg("تم فتح: " + p.name);
+      modalBox.innerHTML = `
+        <h3>${p.name} (${p.city})</h3>
+        <div class="item">
+          <div>
+            <div><strong>${p.item}</strong></div>
+            <div>${p.price} Pi</div>
+          </div>
+          <button type="button" class="gold pay-item-btn" data-amount="${p.price}" data-title="${p.item}">دفع بـ Pi</button>
+        </div>
+        <div style="margin-top:14px;text-align:left;">
+          <button type="button" class="white" style="border:1px solid #ccc;" id="closeBtn">إغلاق</button>
         </div>
       `;
-
       modalEl.classList.add("open");
-      modalEl.setAttribute("aria-hidden", "false");
-      if (shouldInitMap) {
-        initLeafletMap(lat, lng, place.name);
-      }
-    }
-
-    function closePlaceModal() {
-      selectedPlaceId = null;
-      if (leafletMap) {
-        leafletMap.remove();
-        leafletMap = null;
-      }
-      modalEl.classList.remove("open");
-      modalEl.setAttribute("aria-hidden", "true");
-    }
-
-    function render(syncOpenModal = true) {
-      applyStaticTexts();
-      const t = i18n[currentLang];
-
-      const filtered = places.filter((p) => {
-        const matchesCat =
-          activeCategory === "الكل" ||
-          (activeCategory === "مفضلة" ? favorites.includes(p.id) : p.category === activeCategory);
-        const q = searchQuery.trim().toLowerCase();
-        const matchesSearch =
-          !q ||
-          p.name.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          (p.address && p.address.toLowerCase().includes(q));
-        return matchesCat && matchesSearch;
-      });
-
-      if (!filtered.length) {
-        gridEl.innerHTML = `<div class="empty">${t.emptyText}</div>`;
-        return;
-      }
-
-      gridEl.innerHTML = filtered
-        .map((place) => {
-          const isFav = favorites.includes(place.id);
-          const catLabel = t.cats[place.category] || place.category;
-          return `
-            <article class="card" data-place-id="${place.id}">
-              <div>
-                <div class="card-top">
-                  <h2>${place.name}</h2>
-                  <span class="tag">${catLabel}</span>
-                </div>
-                <p class="meta">${t.locationLabel} ${place.city}</p>
-              </div>
-              <div class="card-actions">
-                <span class="pi-accepted">${t.acceptsPi}</span>
-                <button type="button" class="fav-btn ${isFav ? "saved" : ""}" data-fav-id="${place.id}">
-                  ${isFav ? t.savedBtn : t.saveBtn}
-                </button>
-              </div>
-            </article>
-          `;
-        })
-        .join("");
-
-      if (syncOpenModal && selectedPlaceId !== null) {
-        openPlaceModal(selectedPlaceId, true);
-      }
-    }
-
-    async function triggerPiPayment(amount, memo) {
-      alert(
-        "وضع تجريبي (" +
-          amount +
-          " Pi - " +
-          memo +
-          "): الدفع الفعلي عبر Pi يتطلب خادماً للموافقة على المعاملة."
-      );
-    }
-
-    gridEl.addEventListener("click", (e) => {
-      const favBtn = e.target.closest("[data-fav-id]");
-      if (favBtn) {
-        e.stopPropagation();
-        const id = Number(favBtn.dataset.favId);
-        if (favorites.includes(id)) {
-          favorites = favorites.filter((item) => item !== id);
-        } else {
-          favorites.push(id);
-        }
-        saveState();
-        render(false);
-        return;
-      }
-
-      const card = e.target.closest("[data-place-id]");
-      if (card) {
-        openPlaceModal(Number(card.dataset.placeId), true);
-      }
     });
 
     modalEl.addEventListener("click", (e) => {
-      if (e.target === modalEl || e.target.closest("#closeModalBtn")) {
-        closePlaceModal();
+      if (e.target === modalEl || e.target.id === "closeBtn") {
+        modalEl.classList.remove("open");
+        logMsg("تم إغلاق النافذة.");
         return;
       }
-      const payBtn = e.target.closest("[data-pay-amount]");
+      const payBtn = e.target.closest(".pay-item-btn");
       if (payBtn) {
-        const amount = payBtn.dataset.payAmount;
-        const memo = payBtn.dataset.payMemo;
-        triggerPiPayment(amount, memo);
+        logMsg("وضع تجريبي: تم الضغط على دفع " + payBtn.dataset.amount + " Pi مقابل (" + payBtn.dataset.title + ").");
       }
     });
 
-    langBarEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".lang-btn");
-      if (!btn) return;
-      currentLang = btn.dataset.lang;
-      saveState();
-      render(false);
+    document.getElementById("testPayBtn").addEventListener("click", () => {
+      logMsg("وضع تجريبي: تم الضغط على زر تجربة دفع 0.01 Pi بنجاح.");
     });
 
-    catBarEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".cat-btn");
-      if (!btn) return;
-      document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeCategory = btn.dataset.cat;
-      render(false);
-    });
-
-    searchEl.addEventListener("input", (e) => {
-      searchQuery = e.target.value;
-      render(false);
-    });
-
-    formEl.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const name = document.getElementById("placeName").value.trim();
-      const city = document.getElementById("placeCity").value.trim();
-      const address = document.getElementById("placeAddress").value.trim() || city;
-      const latVal = parseFloat(document.getElementById("placeLat").value);
-      const lngVal = parseFloat(document.getElementById("placeLng").value);
-      const category = document.getElementById("placeCategory").value;
-      if (!name || !city) return;
-
-      places.unshift({
-        id: Date.now(),
-        name,
-        city,
-        address,
-        lat: Number.isFinite(latVal) ? latVal : 31.3543,
-        lng: Number.isFinite(lngVal) ? lngVal : 27.2373,
-        category,
-        products: [{ title: name, pricePi: 0.5 }]
-      });
-      saveState();
-      formEl.reset();
-      render(false);
-    });
-
-    if (window.Pi) {
-      window.Pi.init({ version: "2.0", sandbox: true });
-    }
-
-    piLoginBtn.addEventListener("click", async () => {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      logMsg("جاري محاولة تسجيل الدخول عبر Pi...");
       if (!window.Pi) {
-        alert("افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.");
+        logMsg("تنبيه: window.Pi غير متاح في هذه البيئة.");
         return;
       }
       try {
-        const scopes = ["username", "payments"];
-        const auth = await window.Pi.authenticate(scopes, () => {});
-        piUser = auth.user;
-        render(false);
+        window.Pi.init({ version: "2.0", sandbox: true });
+        const auth = await window.Pi.authenticate(["username", "payments"], () => {});
+        logMsg("تم الدخول بنجاح: " + (auth.user && auth.user.username ? auth.user.username : "مستخدم"));
       } catch (err) {
-        alert("تعذر تسجيل الدخول عبر Pi: " + (err && err.message ? err.message : err));
+        logMsg("فشل الدخول: " + (err && err.message ? err.message : err));
       }
     });
-
-    piTestPayBtn.addEventListener("click", () => {
-      alert("وضع تجريبي: الدفع الفعلي عبر Pi يتطلب خادماً للموافقة على المعاملة.");
-    });
-
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
-      });
-    }
-
-    render(false);
   </script>
 </body>
 </html>
