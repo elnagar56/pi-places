@@ -839,4 +839,190 @@
         const q = searchQuery.trim().toLowerCase();
         const matchesSearch =
           !q ||
-          p.name.toLowerCase().includes(q) ||
+          p.name.toLowerCase().includes(q) ||          p.city.toLowerCase().includes(q) ||
+          (p.address && p.address.toLowerCase().includes(q));
+        return matchesCat && matchesSearch;
+      });
+
+      if (!filtered.length) {
+        gridEl.innerHTML = `<div class="empty">${t.emptyText}</div>`;
+        return;
+      }
+
+      gridEl.innerHTML = filtered
+        .map((place) => {
+          const isFav = favorites.includes(place.id);
+          const catLabel = t.cats[place.category] || place.category;
+          return `
+            <article class="card" data-place-id="${place.id}">
+              <div>
+                <div class="card-top">
+                  <h2>${place.name}</h2>
+                  <span class="tag">${catLabel}</span>
+                </div>
+                <p class="meta">${t.locationLabel} ${place.city}</p>
+              </div>
+              <div class="card-actions">
+                <span class="pi-accepted">${t.acceptsPi}</span>
+                <button type="button" class="fav-btn ${isFav ? "saved" : ""}" data-fav-id="${place.id}">
+                  ${isFav ? t.savedBtn : t.saveBtn}
+                </button>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+
+      if (selectedPlaceId !== null) {
+        openPlaceModal(selectedPlaceId);
+      }
+    }
+
+    async function triggerPiPayment(amount, memo) {
+      if (!window.Pi) {
+        alert("افتح التطبيق داخل Pi Browser لإتمام الدفع بعملة Pi.");
+        return;
+      }
+      try {
+        await window.Pi.createPayment(
+          {
+            amount: Number(amount),
+            memo: memo,
+            metadata: { app: "pi-places", item: memo }
+          },
+          {
+            onReadyForServerApproval: function (paymentId) {
+              console.log("Ready for approval:", paymentId);
+            },
+            onReadyForServerCompletion: function (paymentId, txid) {
+              console.log("Ready for completion:", paymentId, txid);
+              alert("تمت عملية الدفع بـ Pi بنجاح!");
+            },
+            onCancel: function () {
+              alert("تم إلغاء عملية الدفع.");
+            },
+            onError: function (error) {
+              alert("حدث خطأ أثناء الدفع: " + error.message);
+            }
+          }
+        );
+      } catch (err) {
+        alert("تعذر بدء الدفع: " + (err && err.message ? err.message : err));
+      }
+    }
+
+    gridEl.addEventListener("click", (e) => {
+      const favBtn = e.target.closest("[data-fav-id]");
+      if (favBtn) {
+        e.stopPropagation();
+        const id = Number(favBtn.dataset.favId);
+        if (favorites.includes(id)) {
+          favorites = favorites.filter((item) => item !== id);
+        } else {
+          favorites.push(id);
+        }
+        saveState();
+        render();
+        return;
+      }
+
+      const card = e.target.closest("[data-place-id]");
+      if (card) {
+        openPlaceModal(Number(card.dataset.placeId));
+      }
+    });
+
+    modalEl.addEventListener("click", (e) => {
+      if (e.target === modalEl || e.target.closest("#closeModalBtn")) {
+        closePlaceModal();
+        return;
+      }
+      const payBtn = e.target.closest("[data-pay-amount]");
+      if (payBtn) {
+        const amount = payBtn.dataset.payAmount;
+        const memo = payBtn.dataset.payMemo;
+        triggerPiPayment(amount, memo);
+      }
+    });
+
+    langBarEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".lang-btn");
+      if (!btn) return;
+      currentLang = btn.dataset.lang;
+      saveState();
+      render();
+    });
+
+    catBarEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".cat-btn");
+      if (!btn) return;
+      document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeCategory = btn.dataset.cat;
+      render();
+    });
+
+    searchEl.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      render();
+    });
+
+    formEl.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("placeName").value.trim();
+      const city = document.getElementById("placeCity").value.trim();
+      const address = document.getElementById("placeAddress").value.trim() || city;
+      const latVal = parseFloat(document.getElementById("placeLat").value);
+      const lngVal = parseFloat(document.getElementById("placeLng").value);
+      const category = document.getElementById("placeCategory").value;
+      if (!name || !city) return;
+
+      places.unshift({
+        id: Date.now(),
+        name,
+        city,
+        address,
+        lat: Number.isFinite(latVal) ? latVal : 31.3543,
+        lng: Number.isFinite(lngVal) ? lngVal : 27.2373,
+        category,
+        products: [{ title: name, pricePi: 0.5 }]
+      });
+      saveState();
+      formEl.reset();
+      render();
+    });
+
+    if (window.Pi) {
+      window.Pi.init({ version: "2.0", sandbox: true });
+    }
+
+    piLoginBtn.addEventListener("click", async () => {
+      if (!window.Pi) {
+        alert("افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.");
+        return;
+      }
+      try {
+        const scopes = ["username", "payments"];
+        const auth = await window.Pi.authenticate(scopes, () => {});
+        piUser = auth.user;
+        render();
+      } catch (err) {
+        alert("تعذر تسجيل الدخول عبر Pi: " + (err && err.message ? err.message : err));
+      }
+    });
+
+    piTestPayBtn.addEventListener("click", () => {
+      triggerPiPayment(0.01, "Pi Places Test Payment");
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
+
