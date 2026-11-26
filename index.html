@@ -188,6 +188,13 @@
       flex-direction: column;
       justify-content: space-between;
       gap: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(63, 28, 102, 0.08);
     }
 
     .card-top {
@@ -215,6 +222,7 @@
     .meta {
       font-size: 0.86rem;
       color: var(--muted);
+      margin-top: 4px;
     }
 
     .card-actions {
@@ -296,6 +304,122 @@
       border-radius: 14px;
       border: 1px solid var(--border);
     }
+
+    /* نافذة التفاصيل */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 14, 34, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 999;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--card);
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.2rem;
+      color: var(--pi-purple-dark);
+    }
+
+    .close-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .address-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 0.9rem;
+    }
+
+    .map-link {
+      display: inline-block;
+      margin-top: 8px;
+      background: var(--pi-purple);
+      color: #fff;
+      text-decoration: none;
+      padding: 7px 14px;
+      border-radius: 9px;
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .products-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--pi-purple-dark);
+      margin-bottom: 8px;
+    }
+
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: #fcfbfe;
+    }
+
+    .product-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    .product-price {
+      font-size: 0.84rem;
+      color: #16794c;
+      font-weight: 700;
+    }
+
+    .buy-pi-btn {
+      background: var(--pi-gold);
+      color: #1e1b2e;
+      border: none;
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -353,6 +477,11 @@
     </section>
   </main>
 
+  <!-- نافذة تفاصيل المكان -->
+  <div class="modal-backdrop" id="placeModal" aria-hidden="true">
+    <div class="modal-box" id="modalContent"></div>
+  </div>
+
   <script>
     const LANG_KEY = "pi_places_lang";
     const i18n = {
@@ -374,6 +503,10 @@
         cityPlaceholder: "المدينة أو المنطقة",
         submitBtn: "إضافة المكان",
         locationLabel: "الموقع:",
+        addressLabel: "العنوان التفصيلي:",
+        openMapBtn: "فتح الموقع على الخريطة",
+        productsTitle: "المنتجات والخدمات المعروضة",
+        payItemBtn: "دفع بـ Pi",
         acceptsPi: "يقبل Pi",
         saveBtn: "☆ حفظ",
         savedBtn: "★ محفوظ",
@@ -401,6 +534,10 @@
         cityPlaceholder: "City or area",
         submitBtn: "Add Place",
         locationLabel: "Location:",
+        addressLabel: "Full Address:",
+        openMapBtn: "Open on Map",
+        productsTitle: "Available Products & Services",
+        payItemBtn: "Pay with Pi",
         acceptsPi: "Accepts Pi",
         saveBtn: "☆ Save",
         savedBtn: "★ Saved",
@@ -428,6 +565,10 @@
         cityPlaceholder: "城市或区域",
         submitBtn: "添加商家",
         locationLabel: "位置：",
+        addressLabel: "详细地址：",
+        openMapBtn: "在地图中打开",
+        productsTitle: "提供的商品与服务",
+        payItemBtn: "使用 Pi 支付",
         acceptsPi: "支持 Pi",
         saveBtn: "☆ 收藏",
         savedBtn: "★ 已收藏",
@@ -440,10 +581,54 @@
     };
 
     const defaultPlaces = [
-      { id: 1, name: "واحة البن للقهوة", city: "القاهرة", category: "مطاعم ومقاهي" },
-      { id: 2, name: "تك زون للصيانة", city: "الإسكندرية", category: "إلكترونيات" },
-      { id: 3, name: "ركن الساحل للمأكولات", city: "مرسى مطروح", category: "مطاعم ومقاهي" },
-      { id: 4, name: "استوديو تصميم ويب", city: "الجيزة", category: "خدمات" }
+      {
+        id: 1,
+        name: "واحة البن للقهوة",
+        city: "القاهرة",
+        address: "المعادي، شارع 9، بجوار محطة المترو",
+        category: "مطاعم ومقاهي",
+        mapQuery: "Maadi Street 9 Cairo",
+        products: [
+          { title: "قهوة عربية مختصة", pricePi: 0.5 },
+          { title: "إسبريسو مزدوج + كرواسون", pricePi: 0.8 }
+        ]
+      },
+      {
+        id: 2,
+        name: "تك زون للصيانة",
+        city: "الإسكندرية",
+        address: "سموحة، شارع فوزي معاذ، برج النصر",
+        category: "إلكترونيات",
+        mapQuery: "Smouha Fawzy Moaz Alexandria",
+        products: [
+          { title: "فحص وتشخيص أعطال الهواتف", pricePi: 1.0 },
+          { title: "شاحن سريع أصلي", pricePi: 1.5 }
+        ]
+      },
+      {
+        id: 3,
+        name: "ركن الساحل للمأكولات",
+        city: "مرسى مطروح",
+        address: "كورنيش مرسى مطروح، أمام شاطئ البسنت",
+        category: "مطاعم ومقاهي",
+        mapQuery: "Marsa Matruh Corniche",
+        products: [
+          { title: "وجبة أسماك بحرية مشوية", pricePi: 2.5 },
+          { title: "عصير ليمون بالنعناع طازج", pricePi: 0.4 }
+        ]
+      },
+      {
+        id: 4,
+        name: "استوديو تصميم ويب",
+        city: "الجيزة",
+        address: "الدقي، شارع التحرير، الدور الثالث",
+        category: "خدمات",
+        mapQuery: "Dokki El Tahrir Street Giza",
+        products: [
+          { title: "تصميم صفحة تعريفية متجاوبة", pricePi: 5.0 },
+          { title: "استشارة ربط تطبيق ويب بـ Pi", pricePi: 3.0 }
+        ]
+      }
     ];
 
     let places = JSON.parse(localStorage.getItem("pi_places_data") || "null") || defaultPlaces;
@@ -453,6 +638,7 @@
     let currentLang = localStorage.getItem(LANG_KEY) || "ar";
     if (!i18n[currentLang]) currentLang = "ar";
     let piUser = null;
+    let selectedPlaceId = null;
 
     const gridEl = document.getElementById("placesGrid");
     const searchEl = document.getElementById("searchInput");
@@ -462,6 +648,8 @@
     const piLoginBtn = document.getElementById("piLoginBtn");
     const piTestPayBtn = document.getElementById("piTestPayBtn");
     const piStatusText = document.getElementById("piStatusText");
+    const modalEl = document.getElementById("placeModal");
+    const modalContentEl = document.getElementById("modalContent");
 
     function saveState() {
       localStorage.setItem("pi_places_data", JSON.stringify(places));
@@ -504,6 +692,64 @@
       });
     }
 
+    function openPlaceModal(placeId) {
+      const place = places.find((item) => item.id === placeId);
+      if (!place) return;
+      selectedPlaceId = placeId;
+      const t = i18n[currentLang];
+      const catLabel = t.cats[place.category] || place.category;
+      const addressText = place.address || place.city;
+      const mapQuery = encodeURIComponent(place.mapQuery || `${place.name} ${place.city}`);
+      const mapUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+      const products = Array.isArray(place.products) && place.products.length
+        ? place.products
+        : [{ title: place.name, pricePi: 0.5 }];
+
+      modalContentEl.innerHTML = `
+        <div class="modal-header">
+          <div>
+            <h2>${place.name}</h2>
+            <span class="tag">${catLabel}</span>
+          </div>
+          <button type="button" class="close-btn" id="closeModalBtn">✕</button>
+        </div>
+
+        <div class="address-box">
+          <div><strong>${t.locationLabel}</strong> ${place.city}</div>
+          <div><strong>${t.addressLabel}</strong> ${addressText}</div>
+          <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">${t.openMapBtn}</a>
+        </div>
+
+        <div class="products-title">${t.productsTitle}</div>
+        <div>
+          ${products
+            .map(
+              (prod, idx) => `
+              <div class="product-item">
+                <div>
+                  <div class="product-name">${prod.title}</div>
+                  <div class="product-price">${prod.pricePi} Pi</div>
+                </div>
+                <button type="button" class="buy-pi-btn" data-pay-amount="${prod.pricePi}" data-pay-memo="${place.name} - ${prod.title}">
+                  ${t.payItemBtn}
+                </button>
+              </div>
+            `
+            )
+            .join("")}
+        </div>
+      `;
+
+      modalEl.classList.add("open");
+      modalEl.setAttribute("aria-hidden", "false");
+    }
+
+    function closePlaceModal() {
+      selectedPlaceId = null;
+      modalEl.classList.remove("open");
+      modalEl.setAttribute("aria-hidden", "true");
+    }
+
     function render() {
       applyStaticTexts();
       const t = i18n[currentLang];
@@ -514,7 +760,10 @@
           (activeCategory === "مفضلة" ? favorites.includes(p.id) : p.category === activeCategory);
         const q = searchQuery.trim().toLowerCase();
         const matchesSearch =
-          !q || p.name.toLowerCase().includes(q) || p.city.toLowerCase().includes(q);
+          !q ||
+          p.name.toLowerCase().includes(q) ||
+          p.city.toLowerCase().includes(q) ||
+          (p.address && p.address.toLowerCase().includes(q));
         return matchesCat && matchesSearch;
       });
 
@@ -528,7 +777,7 @@
           const isFav = favorites.includes(place.id);
           const catLabel = t.cats[place.category] || place.category;
           return `
-            <article class="card">
+            <article class="card" data-place-id="${place.id}">
               <div>
                 <div class="card-top">
                   <h2>${place.name}</h2>
@@ -546,19 +795,77 @@
           `;
         })
         .join("");
+
+      if (selectedPlaceId !== null) {
+        openPlaceModal(selectedPlaceId);
+      }
+    }
+
+    async function triggerPiPayment(amount, memo) {
+      if (!window.Pi) {
+        alert("افتح التطبيق داخل Pi Browser لإتمام الدفع بعملة Pi.");
+        return;
+      }
+      try {
+        await window.Pi.createPayment(
+          {
+            amount: Number(amount),
+            memo: memo,
+            metadata: { app: "pi-places", item: memo }
+          },
+          {
+            onReadyForServerApproval: function (paymentId) {
+              console.log("Ready for approval:", paymentId);
+            },
+            onReadyForServerCompletion: function (paymentId, txid) {
+              console.log("Ready for completion:", paymentId, txid);
+              alert("تمت عملية الدفع بـ Pi بنجاح!");
+            },
+            onCancel: function () {
+              alert("تم إلغاء عملية الدفع.");
+            },
+            onError: function (error) {
+              alert("حدث خطأ أثناء الدفع: " + error.message);
+            }
+          }
+        );
+      } catch (err) {
+        alert("تعذر بدء الدفع: " + (err && err.message ? err.message : err));
+      }
     }
 
     gridEl.addEventListener("click", (e) => {
       const favBtn = e.target.closest("[data-fav-id]");
-      if (!favBtn) return;
-      const id = Number(favBtn.dataset.favId);
-      if (favorites.includes(id)) {
-        favorites = favorites.filter((item) => item !== id);
-      } else {
-        favorites.push(id);
+      if (favBtn) {
+        e.stopPropagation();
+        const id = Number(favBtn.dataset.favId);
+        if (favorites.includes(id)) {
+          favorites = favorites.filter((item) => item !== id);
+        } else {
+          favorites.push(id);
+        }
+        saveState();
+        render();
+        return;
       }
-      saveState();
-      render();
+
+      const card = e.target.closest("[data-place-id]");
+      if (card) {
+        openPlaceModal(Number(card.dataset.placeId));
+      }
+    });
+
+    modalEl.addEventListener("click", (e) => {
+      if (e.target === modalEl || e.target.closest("#closeModalBtn")) {
+        closePlaceModal();
+        return;
+      }
+      const payBtn = e.target.closest("[data-pay-amount]");
+      if (payBtn) {
+        const amount = payBtn.dataset.payAmount;
+        const memo = payBtn.dataset.payMemo;
+        triggerPiPayment(amount, memo);
+      }
     });
 
     langBarEl.addEventListener("click", (e) => {
@@ -594,7 +901,10 @@
         id: Date.now(),
         name,
         city,
-        category
+        address: city,
+        category,
+        mapQuery: `${name} ${city}`,
+        products: [{ title: name, pricePi: 0.5 }]
       });
       saveState();
       formEl.reset();
@@ -620,37 +930,8 @@
       }
     });
 
-    piTestPayBtn.addEventListener("click", async () => {
-      if (!window.Pi) {
-        alert("افتح التطبيق داخل Pi Browser لتجربة الدفع بعملة Pi.");
-        return;
-      }
-      try {
-        await window.Pi.createPayment(
-          {
-            amount: 0.01,
-            memo: "Pi Places Test Payment",
-            metadata: { app: "pi-places", type: "test" }
-          },
-          {
-            onReadyForServerApproval: function (paymentId) {
-              console.log("Ready for approval:", paymentId);
-            },
-            onReadyForServerCompletion: function (paymentId, txid) {
-              console.log("Ready for completion:", paymentId, txid);
-              alert("تمت عملية الدفع التجريبية بنجاح!");
-            },
-            onCancel: function () {
-              alert("تم إلغاء عملية الدفع.");
-            },
-            onError: function (error) {
-              alert("حدث خطأ أثناء الدفع: " + error.message);
-            }
-          }
-        );
-      } catch (err) {
-        alert("تعذر بدء الدفع: " + (err && err.message ? err.message : err));
-      }
+    piTestPayBtn.addEventListener("click", () => {
+      triggerPiPayment(0.01, "Pi Places Test Payment");
     });
 
     if ("serviceWorker" in navigator) {
