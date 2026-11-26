@@ -748,18 +748,22 @@
       const mapContainer = document.getElementById("placeMap");
       if (!mapContainer || !window.L) return;
 
-      leafletMap = L.map("placeMap").setView([lat, lng], 15);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap"
-      }).addTo(leafletMap);
+      try {
+        leafletMap = L.map("placeMap").setView([lat, lng], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap"
+        }).addTo(leafletMap);
 
-      L.marker([lat, lng]).addTo(leafletMap).bindPopup(title).openPopup();
-      setTimeout(() => {
-        if (leafletMap) leafletMap.invalidateSize();
-      }, 150);
+        L.marker([lat, lng]).addTo(leafletMap).bindPopup(title).openPopup();
+        setTimeout(() => {
+          if (leafletMap) leafletMap.invalidateSize();
+        }, 150);
+      } catch (e) {
+        console.warn("Map init skipped:", e);
+      }
     }
 
-    function openPlaceModal(placeId) {
+    function openPlaceModal(placeId, shouldInitMap = true) {
       const place = places.find((item) => item.id === placeId);
       if (!place) return;
       selectedPlaceId = placeId;
@@ -815,7 +819,9 @@
 
       modalEl.classList.add("open");
       modalEl.setAttribute("aria-hidden", "false");
-      initLeafletMap(lat, lng, place.name);
+      if (shouldInitMap) {
+        initLeafletMap(lat, lng, place.name);
+      }
     }
 
     function closePlaceModal() {
@@ -828,7 +834,7 @@
       modalEl.setAttribute("aria-hidden", "true");
     }
 
-    function render() {
+    function render(syncOpenModal = true) {
       applyStaticTexts();
       const t = i18n[currentLang];
 
@@ -874,42 +880,19 @@
         })
         .join("");
 
-      if (selectedPlaceId !== null) {
-        openPlaceModal(selectedPlaceId);
+      if (syncOpenModal && selectedPlaceId !== null) {
+        openPlaceModal(selectedPlaceId, true);
       }
     }
 
     async function triggerPiPayment(amount, memo) {
-      if (!window.Pi) {
-        alert("افتح التطبيق داخل Pi Browser لإتمام الدفع بعملة Pi.");
-        return;
-      }
-      try {
-        await window.Pi.createPayment(
-          {
-            amount: Number(amount),
-            memo: memo,
-            metadata: { app: "pi-places", item: memo }
-          },
-          {
-            onReadyForServerApproval: function (paymentId) {
-              console.log("Ready for approval:", paymentId);
-            },
-            onReadyForServerCompletion: function (paymentId, txid) {
-              console.log("Ready for completion:", paymentId, txid);
-              alert("تمت عملية الدفع بـ Pi بنجاح!");
-            },
-            onCancel: function () {
-              alert("تم إلغاء عملية الدفع.");
-            },
-            onError: function (error) {
-              alert("حدث خطأ أثناء الدفع: " + error.message);
-            }
-          }
-        );
-      } catch (err) {
-        alert("تعذر بدء الدفع: " + (err && err.message ? err.message : err));
-      }
+      alert(
+        "وضع تجريبي (" +
+          amount +
+          " Pi - " +
+          memo +
+          "): الدفع الفعلي عبر Pi يتطلب خادماً للموافقة على المعاملة."
+      );
     }
 
     gridEl.addEventListener("click", (e) => {
@@ -923,13 +906,13 @@
           favorites.push(id);
         }
         saveState();
-        render();
+        render(false);
         return;
       }
 
       const card = e.target.closest("[data-place-id]");
       if (card) {
-        openPlaceModal(Number(card.dataset.placeId));
+        openPlaceModal(Number(card.dataset.placeId), true);
       }
     });
 
@@ -951,7 +934,7 @@
       if (!btn) return;
       currentLang = btn.dataset.lang;
       saveState();
-      render();
+      render(false);
     });
 
     catBarEl.addEventListener("click", (e) => {
@@ -960,12 +943,12 @@
       document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       activeCategory = btn.dataset.cat;
-      render();
+      render(false);
     });
 
     searchEl.addEventListener("input", (e) => {
       searchQuery = e.target.value;
-      render();
+      render(false);
     });
 
     formEl.addEventListener("submit", (e) => {
@@ -990,7 +973,7 @@
       });
       saveState();
       formEl.reset();
-      render();
+      render(false);
     });
 
     if (window.Pi) {
@@ -1006,15 +989,14 @@
         const scopes = ["username", "payments"];
         const auth = await window.Pi.authenticate(scopes, () => {});
         piUser = auth.user;
-        render();
+        render(false);
       } catch (err) {
         alert("تعذر تسجيل الدخول عبر Pi: " + (err && err.message ? err.message : err));
       }
     });
 
     piTestPayBtn.addEventListener("click", () => {
-    alert("وضع تجريبي: الدفع الفعلي عبر Pi يتطلب خادماً للموافقة على المعاملة.");
-
+      alert("وضع تجريبي: الدفع الفعلي عبر Pi يتطلب خادماً للموافقة على المعاملة.");
     });
 
     if ("serviceWorker" in navigator) {
@@ -1023,7 +1005,7 @@
       });
     }
 
-    render();
+    render(false);
   </script>
 </body>
 </html>
