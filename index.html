@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#5c2d91" />
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="./manifest.json" />
   <title>Pi Places — دليل الأماكن الداعمة لـ Pi</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
     :root {
       --pi-purple: #5c2d91;
@@ -29,20 +30,20 @@
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
-      padding-bottom: 40px;
+      padding-bottom: 48px;
     }
 
     header {
       background: linear-gradient(135deg, var(--pi-purple-dark), var(--pi-purple));
       color: #fff;
-      padding: 24px 16px;
+      padding: 22px 16px 28px;
       text-align: center;
       box-shadow: 0 4px 16px rgba(63, 28, 102, 0.2);
     }
 
     header h1 {
       font-size: 1.6rem;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     header p {
@@ -52,7 +53,7 @@
 
     .badge {
       display: inline-block;
-      margin-top: 10px;
+      margin-top: 8px;
       background: rgba(245, 183, 0, 0.2);
       color: var(--pi-gold);
       border: 1px solid rgba(245, 183, 0, 0.5);
@@ -60,6 +61,64 @@
       border-radius: 999px;
       font-size: 0.78rem;
       font-weight: 600;
+    }
+
+    .lang-bar {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .lang-btn {
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .lang-btn.active {
+      background: #fff;
+      color: var(--pi-purple-dark);
+      border-color: #fff;
+      font-weight: 700;
+    }
+
+    .pi-bar {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pi-btn {
+      background: var(--pi-gold);
+      color: #1e1b2e;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .pi-btn.secondary {
+      background: #ffffff;
+      color: var(--pi-purple-dark);
+    }
+
+    .pi-status {
+      font-size: 0.8rem;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
     }
 
     .container {
@@ -105,13 +164,13 @@
       border-radius: 999px;
       font-size: 0.84rem;
       cursor: pointer;
-      transition: 0.2s;
     }
 
     .cat-btn.active {
       background: var(--pi-purple);
       color: #fff;
       border-color: var(--pi-purple);
+      font-weight: 600;
     }
 
     .grid {
@@ -229,10 +288,6 @@
       cursor: pointer;
     }
 
-    .submit-btn:hover {
-      background: var(--pi-purple-dark);
-    }
-
     .empty {
       text-align: center;
       padding: 28px;
@@ -246,14 +301,20 @@
 <body>
   <header>
     <h1>Pi Places</h1>
-    <p>دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
+    <p id="subtitleText">دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
     <span class="badge">Pi Network Directory</span>
-    <div id="langSwitcher" style="margin-top: 12px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-  <button type="button" data-lang="ar" class="cat-btn" style="background: #fff; color: #3f1c66; border: none; font-weight: 600;">العربية</button>
-  <button type="button" data-lang="en" class="cat-btn" style="background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.4);">English</button>
-  <button type="button" data-lang="zh" class="cat-btn" style="background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.4);">中文</button>
+
+    <div class="lang-bar" id="langSwitcher">
+      <button type="button" class="lang-btn active" data-lang="ar">العربية</button>
+      <button type="button" class="lang-btn" data-lang="en">English</button>
+      <button type="button" class="lang-btn" data-lang="zh">中文</button>
     </div>
-    
+
+    <div class="pi-bar">
+      <button type="button" class="pi-btn" id="piLoginBtn">دخول بحساب Pi</button>
+      <button type="button" class="pi-btn secondary" id="piTestPayBtn">تجربة دفع 0.01 Pi</button>
+      <span class="pi-status" id="piStatusText">غير متصل بـ Pi</span>
+    </div>
   </header>
 
   <main class="container">
@@ -265,18 +326,18 @@
         placeholder="ابحث باسم المتجر أو المدينة..."
       />
       <div class="categories" id="categoryBar">
-        <button class="cat-btn active" data-cat="الكل">الكل</button>
-        <button class="cat-btn" data-cat="مطاعم ومقاهي">مطاعم ومقاهي</button>
-        <button class="cat-btn" data-cat="إلكترونيات">إلكترونيات</button>
-        <button class="cat-btn" data-cat="خدمات">خدمات</button>
-        <button class="cat-btn" data-cat="مفضلة">المفضلة</button>
+        <button type="button" class="cat-btn active" data-cat="الكل">الكل</button>
+        <button type="button" class="cat-btn" data-cat="مطاعم ومقاهي">مطاعم ومقاهي</button>
+        <button type="button" class="cat-btn" data-cat="إلكترونيات">إلكترونيات</button>
+        <button type="button" class="cat-btn" data-cat="خدمات">خدمات</button>
+        <button type="button" class="cat-btn" data-cat="مفضلة">المفضلة</button>
       </div>
     </section>
 
     <section class="grid" id="placesGrid"></section>
 
     <section class="add-box">
-      <h3>إضافة مكان جديد إلى الدليل</h3>
+      <h3 id="addBoxTitle">إضافة مكان جديد إلى الدليل</h3>
       <form id="addPlaceForm">
         <div class="form-row">
           <input type="text" id="placeName" placeholder="اسم المكان" required />
@@ -287,12 +348,97 @@
             <option value="خدمات">خدمات</option>
           </select>
         </div>
-        <button type="submit" class="submit-btn">إضافة المكان</button>
+        <button type="submit" class="submit-btn" id="submitPlaceBtn">إضافة المكان</button>
       </form>
     </section>
   </main>
 
   <script>
+    const LANG_KEY = "pi_places_lang";
+    const i18n = {
+      ar: {
+        dir: "rtl",
+        lang: "ar",
+        title: "Pi Places — دليل الأماكن الداعمة لـ Pi",
+        subtitle: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
+        searchPlaceholder: "ابحث باسم المتجر أو المدينة...",
+        cats: {
+          "الكل": "الكل",
+          "مطاعم ومقاهي": "مطاعم ومقاهي",
+          "إلكترونيات": "إلكترونيات",
+          "خدمات": "خدمات",
+          "مفضلة": "المفضلة"
+        },
+        addTitle: "إضافة مكان جديد إلى الدليل",
+        namePlaceholder: "اسم المكان",
+        cityPlaceholder: "المدينة أو المنطقة",
+        submitBtn: "إضافة المكان",
+        locationLabel: "الموقع:",
+        acceptsPi: "يقبل Pi",
+        saveBtn: "☆ حفظ",
+        savedBtn: "★ محفوظ",
+        emptyText: "لا توجد أماكن مطابقة للبحث الحالي.",
+        piLogin: "دخول بحساب Pi",
+        piPay: "تجربة دفع 0.01 Pi",
+        piDisconnected: "غير متصل بـ Pi",
+        piConnected: "مرحباً: "
+      },
+      en: {
+        dir: "ltr",
+        lang: "en",
+        title: "Pi Places — Pi-Accepted Merchants Directory",
+        subtitle: "Directory of stores and services accepting Pi payment",
+        searchPlaceholder: "Search by store name or city...",
+        cats: {
+          "الكل": "All",
+          "مطاعم ومقاهي": "Food & Cafes",
+          "إلكترونيات": "Electronics",
+          "خدمات": "Services",
+          "مفضلة": "Favorites"
+        },
+        addTitle: "Add a New Place to the Directory",
+        namePlaceholder: "Place name",
+        cityPlaceholder: "City or area",
+        submitBtn: "Add Place",
+        locationLabel: "Location:",
+        acceptsPi: "Accepts Pi",
+        saveBtn: "☆ Save",
+        savedBtn: "★ Saved",
+        emptyText: "No places match the current search.",
+        piLogin: "Sign in with Pi",
+        piPay: "Test Pay 0.01 Pi",
+        piDisconnected: "Not connected to Pi",
+        piConnected: "Hi: "
+      },
+      zh: {
+        dir: "ltr",
+        lang: "zh-CN",
+        title: "Pi Places — 支持 Pi 支付的商家指南",
+        subtitle: "支持 Pi 支付的门店与服务目录",
+        searchPlaceholder: "按商家名称或城市搜索...",
+        cats: {
+          "الكل": "全部",
+          "مطاعم ومقاهي": "餐饮与咖啡",
+          "إلكترونيات": "电子产品",
+          "خدمات": "生活服务",
+          "مفضلة": "收藏夹"
+        },
+        addTitle: "添加新商家到目录",
+        namePlaceholder: "商家名称",
+        cityPlaceholder: "城市或区域",
+        submitBtn: "添加商家",
+        locationLabel: "位置：",
+        acceptsPi: "支持 Pi",
+        saveBtn: "☆ 收藏",
+        savedBtn: "★ 已收藏",
+        emptyText: "没有符合当前搜索的商家。",
+        piLogin: "使用 Pi 登录",
+        piPay: "测试支付 0.01 Pi",
+        piDisconnected: "未连接 Pi",
+        piConnected: "你好："
+      }
+    };
+
     const defaultPlaces = [
       { id: 1, name: "واحة البن للقهوة", city: "القاهرة", category: "مطاعم ومقاهي" },
       { id: 2, name: "تك زون للصيانة", city: "الإسكندرية", category: "إلكترونيات" },
@@ -304,28 +450,64 @@
     let favorites = JSON.parse(localStorage.getItem("pi_places_favs") || "[]");
     let activeCategory = "الكل";
     let searchQuery = "";
+    let currentLang = localStorage.getItem(LANG_KEY) || "ar";
+    if (!i18n[currentLang]) currentLang = "ar";
+    let piUser = null;
 
     const gridEl = document.getElementById("placesGrid");
     const searchEl = document.getElementById("searchInput");
     const catBarEl = document.getElementById("categoryBar");
+    const langBarEl = document.getElementById("langSwitcher");
     const formEl = document.getElementById("addPlaceForm");
+    const piLoginBtn = document.getElementById("piLoginBtn");
+    const piTestPayBtn = document.getElementById("piTestPayBtn");
+    const piStatusText = document.getElementById("piStatusText");
 
     function saveState() {
       localStorage.setItem("pi_places_data", JSON.stringify(places));
       localStorage.setItem("pi_places_favs", JSON.stringify(favorites));
+      localStorage.setItem(LANG_KEY, currentLang);
     }
 
-    function toggleFav(id) {
-      if (favorites.includes(id)) {
-        favorites = favorites.filter((item) => item !== id);
+    function applyStaticTexts() {
+      const t = i18n[currentLang];
+      document.documentElement.lang = t.lang;
+      document.documentElement.dir = t.dir;
+      document.title = t.title;
+      document.getElementById("subtitleText").textContent = t.subtitle;
+      searchEl.placeholder = t.searchPlaceholder;
+      document.getElementById("addBoxTitle").textContent = t.addTitle;
+      document.getElementById("placeName").placeholder = t.namePlaceholder;
+      document.getElementById("placeCity").placeholder = t.cityPlaceholder;
+      document.getElementById("submitPlaceBtn").textContent = t.submitBtn;
+      piLoginBtn.textContent = t.piLogin;
+      piTestPayBtn.textContent = t.piPay;
+
+      if (piUser && piUser.username) {
+        piStatusText.textContent = t.piConnected + piUser.username;
       } else {
-        favorites.push(id);
+        piStatusText.textContent = t.piDisconnected;
       }
-      saveState();
-      render();
+
+      document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
+        const key = btn.dataset.cat;
+        if (t.cats[key]) btn.textContent = t.cats[key];
+      });
+
+      const selectEl = document.getElementById("placeCategory");
+      Array.from(selectEl.options).forEach((opt) => {
+        if (t.cats[opt.value]) opt.textContent = t.cats[opt.value];
+      });
+
+      document.querySelectorAll("#langSwitcher .lang-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.lang === currentLang);
+      });
     }
 
     function render() {
+      applyStaticTexts();
+      const t = i18n[currentLang];
+
       const filtered = places.filter((p) => {
         const matchesCat =
           activeCategory === "الكل" ||
@@ -337,26 +519,27 @@
       });
 
       if (!filtered.length) {
-        gridEl.innerHTML = `<div class="empty">لا توجد أماكن مطابقة للبحث الحالي.</div>`;
+        gridEl.innerHTML = `<div class="empty">${t.emptyText}</div>`;
         return;
       }
 
       gridEl.innerHTML = filtered
         .map((place) => {
           const isFav = favorites.includes(place.id);
+          const catLabel = t.cats[place.category] || place.category;
           return `
             <article class="card">
               <div>
                 <div class="card-top">
                   <h2>${place.name}</h2>
-                  <span class="tag">${place.category}</span>
+                  <span class="tag">${catLabel}</span>
                 </div>
-                <p class="meta">الموقع: ${place.city}</p>
+                <p class="meta">${t.locationLabel} ${place.city}</p>
               </div>
               <div class="card-actions">
-                <span class="pi-accepted">يقبل Pi</span>
-                <button class="fav-btn ${isFav ? "saved" : ""}" onclick="toggleFav(${place.id})">
-                  ${isFav ? "★ محفوظ" : "☆ حفظ"}
+                <span class="pi-accepted">${t.acceptsPi}</span>
+                <button type="button" class="fav-btn ${isFav ? "saved" : ""}" data-fav-id="${place.id}">
+                  ${isFav ? t.savedBtn : t.saveBtn}
                 </button>
               </div>
             </article>
@@ -365,17 +548,38 @@
         .join("");
     }
 
-    searchEl.addEventListener("input", (e) => {
-      searchQuery = e.target.value;
+    gridEl.addEventListener("click", (e) => {
+      const favBtn = e.target.closest("[data-fav-id]");
+      if (!favBtn) return;
+      const id = Number(favBtn.dataset.favId);
+      if (favorites.includes(id)) {
+        favorites = favorites.filter((item) => item !== id);
+      } else {
+        favorites.push(id);
+      }
+      saveState();
+      render();
+    });
+
+    langBarEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".lang-btn");
+      if (!btn) return;
+      currentLang = btn.dataset.lang;
+      saveState();
       render();
     });
 
     catBarEl.addEventListener("click", (e) => {
       const btn = e.target.closest(".cat-btn");
       if (!btn) return;
-      document.querySelectorAll(".cat-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       activeCategory = btn.dataset.cat;
+      render();
+    });
+
+    searchEl.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
       render();
     });
 
@@ -396,198 +600,66 @@
       formEl.reset();
       render();
     });
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
-  });
+
+    if (window.Pi) {
+      window.Pi.init({ version: "2.0", sandbox: true });
+    }
+
+    piLoginBtn.addEventListener("click", async () => {
+      if (!window.Pi) {
+        alert("افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.");
+        return;
       }
-      
+      try {
+        const scopes = ["username", "payments"];
+        const auth = await window.Pi.authenticate(scopes, () => {});
+        piUser = auth.user;
+        render();
+      } catch (err) {
+        alert("تعذر تسجيل الدخول عبر Pi: " + (err && err.message ? err.message : err));
+      }
+    });
+
+    piTestPayBtn.addEventListener("click", async () => {
+      if (!window.Pi) {
+        alert("افتح التطبيق داخل Pi Browser لتجربة الدفع بعملة Pi.");
+        return;
+      }
+      try {
+        await window.Pi.createPayment(
+          {
+            amount: 0.01,
+            memo: "Pi Places Test Payment",
+            metadata: { app: "pi-places", type: "test" }
+          },
+          {
+            onReadyForServerApproval: function (paymentId) {
+              console.log("Ready for approval:", paymentId);
+            },
+            onReadyForServerCompletion: function (paymentId, txid) {
+              console.log("Ready for completion:", paymentId, txid);
+              alert("تمت عملية الدفع التجريبية بنجاح!");
+            },
+            onCancel: function () {
+              alert("تم إلغاء عملية الدفع.");
+            },
+            onError: function (error) {
+              alert("حدث خطأ أثناء الدفع: " + error.message);
+            }
+          }
+        );
+      } catch (err) {
+        alert("تعذر بدء الدفع: " + (err && err.message ? err.message : err));
+      }
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+
     render();
-    (function () {
-  const LANG_KEY = "pi_places_lang";
-  const translations = {
-    ar: {
-      dir: "rtl",
-      lang: "ar",
-      title: "Pi Places — دليل الأماكن الداعمة لـ Pi",
-      subtitle: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
-      badge: "Pi Network Directory",
-      searchPlaceholder: "ابحث باسم المتجر أو المدينة...",
-      cats: {
-        "الكل": "الكل",
-        "مطاعم ومقاهي": "مطاعم ومقاهي",
-        "إلكترونيات": "إلكترونيات",
-        "خدمات": "خدمات",
-        "المفضلة": "المفضلة"
-      },
-      addTitle: "إضافة مكان جديد إلى الدليل",
-      namePlaceholder: "اسم المتجر أو الخدمة",
-      cityPlaceholder: "المدينة أو المنطقة",
-      submitBtn: "إضافة إلى الدليل",
-      locationLabel: "الموقع:",
-      acceptsPi: "يقبل Pi",
-      saveBtn: "☆ حفظ",
-      savedBtn: "★ محفوظ",
-      emptyText: "لا توجد أماكن مطابقة للبحث أو التصنيف الحالي."
-    },
-    en: {
-      dir: "ltr",
-      lang: "en",
-      title: "Pi Places — Pi-Accepted Merchants Directory",
-      subtitle: "Directory of stores and services accepting Pi payment",
-      badge: "Pi Network Directory",
-      searchPlaceholder: "Search by store name or city...",
-      cats: {
-        "الكل": "All",
-        "مطاعم ومقاهي": "Food & Cafes",
-        "إلكترونيات": "Electronics",
-        "خدمات": "Services",
-        "المفضلة": "Favorites"
-      },
-      addTitle: "Add a New Place to the Directory",
-      namePlaceholder: "Store or service name",
-      cityPlaceholder: "City or area",
-      submitBtn: "Add to Directory",
-      locationLabel: "Location:",
-      acceptsPi: "Accepts Pi",
-      saveBtn: "☆ Save",
-      savedBtn: "★ Saved",
-      emptyText: "No places match the current search or filter."
-    },
-    zh: {
-      dir: "ltr",
-      lang: "zh-CN",
-      title: "Pi Places — 支持 Pi 支付的商家指南",
-      subtitle: "支持 Pi 支付的门店与服务目录",
-      badge: "Pi Network Directory",
-      searchPlaceholder: "按商家名称或城市搜索...",
-      cats: {
-        "الكل": "全部",
-        "مطاعم ومقاهي": "餐饮与咖啡",
-        "إلكترونيات": "电子产品",
-        "خدمات": "生活服务",
-        "المفضلة": "收藏夹"
-      },
-      addTitle: "添加新商家到目录",
-      namePlaceholder: "商家或服务名称",
-      cityPlaceholder: "城市或区域",
-      submitBtn: "添加到目录",
-      locationLabel: "位置：",
-      acceptsPi: "支持 Pi",
-      saveBtn: "☆ 收藏",
-      savedBtn: "★ 已收藏",
-      emptyText: "没有符合当前搜索或分类的商家。"
-    }
-  };
-
-  let currentLang = localStorage.getItem(LANG_KEY) || "ar";
-  if (!translations[currentLang]) currentLang = "ar";
-
-  function applyI18n() {
-    const t = translations[currentLang];
-    document.documentElement.lang = t.lang;
-    document.documentElement.dir = t.dir;
-    document.title = t.title;
-
-    const h1 = document.querySelector("header h1");
-    const p = document.querySelector("header p");
-    const badge = document.querySelector("header .badge");
-    if (h1) h1.textContent = "Pi Places";
-    if (p) p.textContent = t.subtitle;
-    if (badge) badge.textContent = t.badge;
-
-    const searchInput = document.getElementById("searchInput");
-    if (searchInput) searchInput.placeholder = t.searchPlaceholder;
-
-    document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
-      const catKey = btn.dataset.cat;
-      if (catKey && t.cats[catKey]) {
-        btn.textContent = t.cats[catKey];
-      }
-    });
-
-    const addTitle = document.querySelector(".add-box h3");
-    if (addTitle) addTitle.textContent = t.addTitle;
-
-    const placeName = document.getElementById("placeName");
-    const placeCity = document.getElementById("placeCity");
-    const placeCategory = document.getElementById("placeCategory");
-    const submitBtn = document.querySelector("#addPlaceForm .submit-btn");
-
-    if (placeName) placeName.placeholder = t.namePlaceholder;
-    if (placeCity) placeCity.placeholder = t.cityPlaceholder;
-    if (submitBtn) submitBtn.textContent = t.submitBtn;
-
-    if (placeCategory) {
-      Array.from(placeCategory.options).forEach((opt) => {
-        if (t.cats[opt.value]) {
-          opt.textContent = t.cats[opt.value];
-        }
-      });
-    }
-
-    document.querySelectorAll("#langSwitcher button[data-lang]").forEach((btn) => {
-      const active = btn.dataset.lang === currentLang;
-      btn.style.background = active ? "#fff" : "rgba(255,255,255,0.18)";
-      btn.style.color = active ? "#3f1c66" : "#fff";
-      btn.style.border = active ? "none" : "1px solid rgba(255,255,255,0.4)";
-      btn.style.fontWeight = active ? "700" : "600";
-    });
-  }
-
-  const origRender = typeof render === "function" ? render : null;
-  if (origRender) {
-    window.render = function () {
-      applyI18n();
-      origRender();
-      const t = translations[currentLang];
-      document.querySelectorAll("#placesGrid .card").forEach((card) => {
-        const tag = card.querySelector(".tag");
-        if (tag && t.cats[tag.textContent.trim()]) {
-          tag.textContent = t.cats[tag.textContent.trim()];
-        }
-        const meta = card.querySelector(".meta");
-        if (meta) {
-          meta.innerHTML = meta.innerHTML
-            .replace("الموقع:", t.locationLabel)
-            .replace("Location:", t.locationLabel)
-            .replace("位置：", t.locationLabel);
-        }
-        const piBadge = card.querySelector(".pi-accepted");
-        if (piBadge) piBadge.textContent = t.acceptsPi;
-
-        const favBtn = card.querySelector("button");
-        if (favBtn) {
-          const txt = favBtn.textContent.trim();
-          const isSaved = txt.startsWith("★");
-          favBtn.textContent = isSaved ? t.savedBtn : t.saveBtn;
-        }
-      });
-
-      const emptyEl = document.querySelector("#placesGrid .empty");
-      if (emptyEl) emptyEl.textContent = t.emptyText;
-    };
-  }
-
-  document.querySelectorAll("#langSwitcher button[data-lang]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      currentLang = btn.dataset.lang;
-      localStorage.setItem(LANG_KEY, currentLang);
-      if (typeof window.render === "function") {
-        window.render();
-      } else {
-        applyI18n();
-      }
-    });
-  });
-
-  applyI18n();
-  if (typeof window.render === "function") {
-    window.render();
-  }
-})();
-
   </script>
 </body>
-  </html>
-  
+</html>
