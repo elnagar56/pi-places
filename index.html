@@ -201,7 +201,7 @@
       border: 1px solid var(--border);
       background: #f9fafb;
       color: var(--text);
-      padding: 8px 14px;
+      padding: 8px 13px;
       border-radius: 999px;
       font-size: 13px;
       font-weight: 600;
@@ -341,7 +341,7 @@
     }
 
     textarea {
-      min-height: 72px;
+      min-height: 76px;
       resize: vertical;
     }
 
@@ -428,15 +428,25 @@
         type="text"
         id="searchInput"
         class="search-input"
-        placeholder="ابحث باسم المتجر أو التطبيق أو المدينة..."
+        placeholder="ابحث باسم المتجر أو التطبيق أو المدينة أو الخدمة..."
         oninput="renderPlaces()"
       />
       <div class="chips" id="categoryChips">
         <button type="button" class="chip active" data-cat="all" onclick="selectCategory('all')">الكل</button>
-        <button type="button" class="chip" data-cat="restaurants" onclick="selectCategory('restaurants')">مطاعم ومقاهي</button>
-        <button type="button" class="chip" data-cat="electronics" onclick="selectCategory('electronics')">إلكترونيات</button>
-        <button type="button" class="chip" data-cat="services" onclick="selectCategory('services')">خدمات</button>
         <button type="button" class="chip" data-cat="favorites" onclick="selectCategory('favorites')">المفضلة</button>
+        <button type="button" class="chip" data-cat="restaurants" onclick="selectCategory('restaurants')">مطاعم ومقاهي</button>
+        <button type="button" class="chip" data-cat="clothing" onclick="selectCategory('clothing')">ملابس وأزياء</button>
+        <button type="button" class="chip" data-cat="electronics" onclick="selectCategory('electronics')">إلكترونيات وصيانة</button>
+        <button type="button" class="chip" data-cat="sports" onclick="selectCategory('sports')">ألعاب رياضية ولياقة</button>
+        <button type="button" class="chip" data-cat="cars" onclick="selectCategory('cars')">سيارات ومركبات</button>
+        <button type="button" class="chip" data-cat="travel" onclick="selectCategory('travel')">مواصلات وقطارات وطيران</button>
+        <button type="button" class="chip" data-cat="shopping" onclick="selectCategory('shopping')">تسوق ومتاجر عامة</button>
+        <button type="button" class="chip" data-cat="apps" onclick="selectCategory('apps')">تطبيقات وألعاب</button>
+        <button type="button" class="chip" data-cat="health" onclick="selectCategory('health')">صحة وجمال</button>
+        <button type="button" class="chip" data-cat="realestate" onclick="selectCategory('realestate')">عقارات وسكن</button>
+        <button type="button" class="chip" data-cat="education" onclick="selectCategory('education')">تعليم وكورسات</button>
+        <button type="button" class="chip" data-cat="services" onclick="selectCategory('services')">خدمات عامة</button>
+        <button type="button" class="chip" data-cat="other" onclick="selectCategory('other')">خدمات أخرى</button>
       </div>
     </section>
 
@@ -453,29 +463,43 @@
 
       <form id="addPlaceForm" onsubmit="submitNewPlace(event)">
         <div class="form-group">
-          <label for="placeName">اسم المتجر أو التطبيق *</label>
-          <input type="text" id="placeName" required placeholder="مثال: مطعم النخيل أو تطبيق سوقي" />
+          <label for="placeName">اسم المتجر أو التطبيق أو الخدمة *</label>
+          <input type="text" id="placeName" required placeholder="مثال: مطعم النخيل أو متجر أزياء أو حجز رحلات" />
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label for="placeCity">المدينة *</label>
-            <input type="text" id="placeCity" required placeholder="مثال: القاهرة" />
+            <input type="text" id="placeCity" required placeholder="مثال: القاهرة أو مطروح" />
           </div>
 
           <div class="form-group">
             <label for="placeCategory">التصنيف *</label>
             <select id="placeCategory">
               <option value="restaurants">مطاعم ومقاهي</option>
-              <option value="electronics">إلكترونيات</option>
-              <option value="services">خدمات</option>
+              <option value="clothing">ملابس وأزياء</option>
+              <option value="electronics">إلكترونيات وصيانة</option>
+              <option value="sports">ألعاب رياضية ولياقة</option>
+              <option value="cars">سيارات ومركبات</option>
+              <option value="travel">مواصلات وقطارات وطيران</option>
+              <option value="shopping">تسوق ومتاجر عامة</option>
+              <option value="apps">تطبيقات وألعاب</option>
+              <option value="health">صحة وجمال</option>
+              <option value="realestate">عقارات وسكن</option>
+              <option value="education">تعليم وكورسات</option>
+              <option value="services">خدمات عامة</option>
+              <option value="other">خدمات أخرى</option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="placeDesc">نبذة مختصرة عن المكان وما يقدمه *</label>
-          <textarea id="placeDesc" required placeholder="مثال: يقدم مأكولات شرقية ومنيو متكامل داخل تطبيقه الخاص..."></textarea>
+          <label for="placeDesc">نبذة مختصرة عن المكان أو التطبيق وما يقدمه *</label>
+          <textarea
+            id="placeDesc"
+            required
+            placeholder="اكتب هنا تفاصيل نشاطك أو تطبيقك؛ ولو اخترت (خدمات أخرى) اكتب نوع الخدمة أو التطبيق بوضوح..."
+          ></textarea>
         </div>
 
         <div class="form-group">
@@ -565,8 +589,18 @@
 
     const CATEGORY_LABELS = {
       restaurants: "مطاعم ومقاهي",
-      electronics: "إلكترونيات",
-      services: "خدمات"
+      clothing: "ملابس وأزياء",
+      electronics: "إلكترونيات وصيانة",
+      sports: "ألعاب رياضية ولياقة",
+      cars: "سيارات ومركبات",
+      travel: "مواصلات وقطارات وطيران",
+      shopping: "تسوق ومتاجر عامة",
+      apps: "تطبيقات وألعاب",
+      health: "صحة وجمال",
+      realestate: "عقارات وسكن",
+      education: "تعليم وكورسات",
+      services: "خدمات عامة",
+      other: "خدمات أخرى"
     };
 
     let currentLang = "ar";
