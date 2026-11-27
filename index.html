@@ -105,6 +105,21 @@
       font-size: 0.95rem;
     }
 
+    .btn-add-store {
+      background: #10b981;
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    .btn-add-store:hover {
+      background: #059669;
+    }
+
     .user-badge {
       margin-top: 12px;
       display: inline-block;
@@ -308,6 +323,47 @@
       font-size: 0.9rem;
     }
 
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .fee-box {
+      background: #f5f3ff;
+      border: 1px solid #ddd6fe;
+      color: var(--primary-dark);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 14px 0;
+    }
+
     footer {
       text-align: center;
       padding: 22px 14px 30px;
@@ -344,6 +400,7 @@
     <div class="auth-bar">
       <button class="btn-pi" id="loginBtn" onclick="loginWithPi()">دخول بحساب Pi</button>
       <button class="btn-demo" id="demoBtn" onclick="demoPayment()">تجربة دفع 0.01 Pi</button>
+      <button class="btn-add-store" id="addStoreBtn" onclick="openAddStoreModal()">+ أضف متجرك</button>
     </div>
 
     <div id="userStatus" class="user-badge" style="display:none;"></div>
@@ -372,17 +429,86 @@
     <section id="placesList" class="places-list"></section>
   </main>
 
-  <div id="placeModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event)">
+  <div id="placeModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'placeModal')">
     <div class="modal-box">
       <div class="modal-header">
         <div>
           <h2 id="modalPlaceTitle"></h2>
           <div id="modalPlaceCity" class="product-price"></div>
         </div>
-        <button class="btn-secondary" onclick="closeModal()">إغلاق</button>
+        <button class="btn-secondary" onclick="closeModal('placeModal')">إغلاق</button>
       </div>
       <div id="map"></div>
       <div id="modalProducts"></div>
+    </div>
+  </div>
+
+  <div id="addStoreModal" class="modal-backdrop" onclick="closeModalOnBackdrop(event, 'addStoreModal')">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <h2>إضافة متجر أو خدمة جديدة</h2>
+          <div class="product-price">انشر مكانك ليظهر للعملاء ويقبل الدفع بعملة Pi</div>
+        </div>
+        <button class="btn-secondary" onclick="closeModal('addStoreModal')">إغلاق</button>
+      </div>
+
+      <form id="addStoreForm" onsubmit="submitNewStore(event)">
+        <div class="form-group">
+          <label for="storeName">اسم المتجر أو الخدمة *</label>
+          <input type="text" id="storeName" class="form-control" placeholder="مثال: مقهى النخيل" required />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="storeCity">المدينة *</label>
+            <input type="text" id="storeCity" class="form-control" placeholder="مثال: القاهرة" required />
+          </div>
+
+          <div class="form-group">
+            <label for="storeCat">التصنيف *</label>
+            <select id="storeCat" class="form-control">
+              <option value="food">مطاعم ومقاهي</option>
+              <option value="electronics">إلكترونيات</option>
+              <option value="services">خدمات</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="storeProductName">منتج أو خدمة أساسية *</label>
+            <input type="text" id="storeProductName" class="form-control" placeholder="مثال: شاي نعناع" required />
+          </div>
+
+          <div class="form-group">
+            <label for="storeProductPrice">السعر (Pi) *</label>
+            <input type="number" step="0.01" min="0.01" id="storeProductPrice" class="form-control" value="0.20" required />
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="storeLat">خط العرض (Lat)</label>
+            <input type="number" step="any" id="storeLat" class="form-control" value="30.0444" required />
+          </div>
+
+          <div class="form-group">
+            <label for="storeLng">خط الطول (Lng)</label>
+            <input type="number" step="any" id="storeLng" class="form-control" value="31.2357" required />
+          </div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <button type="button" class="btn-secondary" onclick="detectCurrentLocation()">تحديد موقعي الحالي تلقائياً</button>
+        </div>
+
+        <div class="fee-box" id="listingFeeText">
+          رسوم إدراج المتجر: 0.10 Pi تُدفع عبر Pi Wallet قبل نشر المتجر.
+        </div>
+
+        <button type="submit" class="btn-add-store" style="width: 100%;">دفع 0.10 Pi ونشر المتجر</button>
+      </form>
     </div>
   </div>
 
@@ -398,14 +524,17 @@
   <script>
     const BACKEND_URL = "https://pi-places-backend.vercel.app";
     const APP_NAME = "Pi Places - Local Places";
+    const LISTING_FEE_PI = 0.10;
+    const CUSTOM_STORES_KEY = "pi_places_custom_stores_v1";
 
     let currentLang = "ar";
     let currentCat = "all";
     let currentUser = null;
     let mapInstance = null;
     let favorites = JSON.parse(localStorage.getItem("pi_places_favs") || "[]");
+    let customStores = JSON.parse(localStorage.getItem(CUSTOM_STORES_KEY) || "[]");
 
-    const PLACES = [
+    const BASE_PLACES = [
       {
         id: "coffee-oasis",
         name: "واحة البن للقهوة",
@@ -442,6 +571,10 @@
         ]
       }
     ];
+
+    function getAllPlaces() {
+      return [...customStores, ...BASE_PLACES];
+    }
 
     if (window.Pi) {
       Pi.init({ version: "2.0", sandbox: true });
@@ -524,55 +657,154 @@
       }
     }
 
+    function executePiPayment({ amount, memo, metadata, onSuccess }) {
+      return new Promise(async (resolve, reject) => {
+        if (!window.Pi) {
+          const msg = `وضع تجريبي: تم محاكاة دفع ${amount} Pi مقابل (${memo}).`;
+          showNotice(msg);
+          if (onSuccess) onSuccess({ demo: true });
+          resolve({ demo: true });
+          return;
+        }
+
+        try {
+          if (!currentUser) {
+            await loginWithPi();
+          }
+
+          await Pi.createPayment(
+            {
+              amount: Number(amount),
+              memo: memo,
+              metadata: metadata || {}
+            },
+            {
+              onReadyForServerApproval: async function (paymentId) {
+                await fetch(`${BACKEND_URL}/approve`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ paymentId })
+                });
+              },
+              onReadyForServerCompletion: async function (paymentId, txid) {
+                await fetch(`${BACKEND_URL}/complete`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ paymentId, txid })
+                });
+                if (onSuccess) onSuccess({ paymentId, txid });
+                resolve({ paymentId, txid });
+              },
+              onCancel: function () {
+                showNotice("تم إلغاء عملية الدفع.");
+                reject(new Error("Payment cancelled"));
+              },
+              onError: function (error) {
+                const errMsg = error && error.message ? error.message : String(error);
+                showNotice("حدث خطأ أثناء الدفع: " + errMsg);
+                reject(error);
+              }
+            }
+          );
+        } catch (err) {
+          const errMsg = err && err.message ? err.message : String(err);
+          showNotice("تعذر بدء عملية الدفع: " + errMsg);
+          reject(err);
+        }
+      });
+    }
+
     async function payForProduct(placeName, productName, amount) {
-      if (!window.Pi) {
-        demoPayment();
+      const memo = `${APP_NAME} - ${placeName} - ${productName}`;
+      try {
+        await executePiPayment({
+          amount: Number(amount),
+          memo: memo,
+          metadata: { app: APP_NAME, place: placeName, product: productName },
+          onSuccess: () => {
+            showNotice(`تم إتمام الدفع بنجاح (${amount} Pi) مقابل ${productName}`);
+          }
+        });
+      } catch (_) {}
+    }
+
+    function openAddStoreModal() {
+      document.getElementById("addStoreModal").classList.add("open");
+    }
+
+    function detectCurrentLocation() {
+      if (!navigator.geolocation) {
+        showNotice("المتصفح لا يدعم تحديد الموقع الجغرافي تلقائياً.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          document.getElementById("storeLat").value = pos.coords.latitude.toFixed(6);
+          document.getElementById("storeLng").value = pos.coords.longitude.toFixed(6);
+          showNotice("تم تحديد إحداثيات موقعك الحالي بنجاح.");
+        },
+        () => {
+          showNotice("تعذر الحصول على الموقع الحالي؛ يمكنك إدخال الإحداثيات يدوياً.");
+        }
+      );
+    }
+
+    async function submitNewStore(e) {
+      e.preventDefault();
+
+      const name = document.getElementById("storeName").value.trim();
+      const city = document.getElementById("storeCity").value.trim();
+      const cat = document.getElementById("storeCat").value;
+      const productName = document.getElementById("storeProductName").value.trim();
+      const productPrice = parseFloat(document.getElementById("storeProductPrice").value);
+      const lat = parseFloat(document.getElementById("storeLat").value);
+      const lng = parseFloat(document.getElementById("storeLng").value);
+
+      if (!name || !city || !productName || isNaN(productPrice) || productPrice <= 0 || isNaN(lat) || isNaN(lng)) {
+        showNotice("يرجى إدخال جميع بيانات المتجر بشكل صحيح.");
         return;
       }
 
-      try {
-        if (!currentUser) {
-          await loginWithPi();
-        }
+      const memo = `${APP_NAME} - رسوم إضافة متجر: ${name} (${city})`;
 
-        const memo = `${APP_NAME} - ${placeName} - ${productName}`;
-        await Pi.createPayment(
-          {
-            amount: Number(amount),
-            memo: memo,
-            metadata: { app: APP_NAME, place: placeName, product: productName }
-          },
-          {
-            onReadyForServerApproval: async function (paymentId) {
-              await fetch(`${BACKEND_URL}/approve`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentId })
-              });
-            },
-            onReadyForServerCompletion: async function (paymentId, txid) {
-              await fetch(`${BACKEND_URL}/complete`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ paymentId, txid })
-              });
-              showNotice(`تم إتمام الدفع بنجاح (${amount} Pi) مقابل ${productName}`);
-            },
-            onCancel: function () {
-              showNotice("تم إلغاء عملية الدفع.");
-            },
-            onError: function (error) {
-              showNotice("حدث خطأ أثناء الدفع: " + (error && error.message ? error.message : error));
-            }
+      try {
+        await executePiPayment({
+          amount: LISTING_FEE_PI,
+          memo: memo,
+          metadata: { type: "store_listing", storeName: name, city: city, cat: cat },
+          onSuccess: () => {
+            const newStore = {
+              id: "store-" + Date.now(),
+              name,
+              city,
+              cat,
+              lat,
+              lng,
+              products: [
+                {
+                  id: "prod-" + Date.now(),
+                  name: productName,
+                  price: productPrice
+                }
+              ]
+            };
+
+            customStores = [newStore, ...customStores];
+            localStorage.setItem(CUSTOM_STORES_KEY, JSON.stringify(customStores));
+            document.getElementById("addStoreForm").reset();
+            document.getElementById("storeProductPrice").value = "0.20";
+            document.getElementById("storeLat").value = "30.0444";
+            document.getElementById("storeLng").value = "31.2357";
+            closeModal("addStoreModal");
+            renderPlaces();
+            showNotice(`تم دفع ${LISTING_FEE_PI} Pi وإضافة متجر "${name}" بنجاح!`);
           }
-        );
-      } catch (err) {
-        showNotice("تعذر بدء عملية الدفع: " + (err && err.message ? err.message : err));
-      }
+        });
+      } catch (_) {}
     }
 
     function openPlaceModal(placeId) {
-      const place = PLACES.find((p) => p.id === placeId);
+      const place = getAllPlaces().find((p) => p.id === placeId);
       if (!place) return;
 
       document.getElementById("modalPlaceTitle").textContent = place.name;
@@ -614,12 +846,13 @@
       document.getElementById("modalProducts").innerHTML = productsHtml;
     }
 
-    function closeModal() {
-      document.getElementById("placeModal").classList.remove("open");
+    function closeModal(modalId) {
+      const targetId = modalId || "placeModal";
+      document.getElementById(targetId).classList.remove("open");
     }
 
-    function closeModalOnBackdrop(e) {
-      if (e.target.id === "placeModal") closeModal();
+    function closeModalOnBackdrop(e, modalId) {
+      if (e.target.id === modalId) closeModal(modalId);
     }
 
     function getCatLabel(cat) {
@@ -633,7 +866,7 @@
 
     function renderPlaces() {
       const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
-      const filtered = PLACES.filter((p) => {
+      const filtered = getAllPlaces().filter((p) => {
         const matchesCat =
           currentCat === "all" ||
           (currentCat === "fav" ? favorites.includes(p.id) : p.cat === currentCat);
