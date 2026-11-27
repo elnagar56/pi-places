@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#5c2d91" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <title>Pi Places — دليل الأماكن الداعمة لـ Pi</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
@@ -50,6 +51,32 @@
       opacity: 0.92;
     }
 
+    .lang-bar {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .lang-btn {
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .lang-btn.active {
+      background: #fff;
+      color: var(--pi-purple-dark);
+      border-color: #fff;
+      font-weight: 700;
+    }
+
     .pi-bar {
       margin-top: 12px;
       display: flex;
@@ -73,6 +100,13 @@
     .pi-btn.secondary {
       background: #ffffff;
       color: var(--pi-purple-dark);
+    }
+
+    .pi-status {
+      font-size: 0.8rem;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 4px 10px;
+      border-radius: 999px;
     }
 
     .container {
@@ -308,10 +342,18 @@
 <body>
   <header>
     <h1>Pi Places</h1>
-    <p>دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
+    <p id="subtitleText">دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
+
+    <div class="lang-bar" id="langBar">
+      <button type="button" class="lang-btn active" data-lang="ar">العربية</button>
+      <button type="button" class="lang-btn" data-lang="en">English</button>
+      <button type="button" class="lang-btn" data-lang="zh">中文</button>
+    </div>
+
     <div class="pi-bar">
       <button type="button" class="pi-btn" id="piLoginBtn">دخول بحساب Pi</button>
       <button type="button" class="pi-btn secondary" id="piTestPayBtn">تجربة دفع 0.01 Pi</button>
+      <span class="pi-status" id="piStatusText">غير متصل بـ Pi</span>
     </div>
   </header>
 
@@ -337,19 +379,124 @@
   </div>
 
   <script>
-    const statusBanner = document.getElementById("statusBanner");
-    const gridEl = document.getElementById("placesGrid");
-    const searchEl = document.getElementById("searchInput");
-    const catBarEl = document.getElementById("categoryBar");
-    const modalEl = document.getElementById("placeModal");
-    const modalContentEl = document.getElementById("modalContent");
-
-    function setStatus(text) {
-      statusBanner.textContent = text;
-    }
-
-    window.onerror = function (msg, src, line) {
-      setStatus("خطأ في الكود: " + msg + " (السطر " + line + ")");
+    const i18n = {
+      ar: {
+        dir: "rtl",
+        lang: "ar",
+        title: "Pi Places — دليل الأماكن الداعمة لـ Pi",
+        subtitle: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
+        searchPlaceholder: "ابحث باسم المتجر أو المدينة...",
+        cats: {
+          "الكل": "الكل",
+          "مطاعم ومقاهي": "مطاعم ومقاهي",
+          "إلكترونيات": "إلكترونيات",
+          "خدمات": "خدمات",
+          "مفضلة": "المفضلة"
+        },
+        locationLabel: "الموقع:",
+        addressLabel: "العنوان:",
+        coordsLabel: "الإحداثيات:",
+        openMapBtn: "فتح في خرائط جوجل",
+        productsTitle: "المنتجات والخدمات والأسعار:",
+        payItemBtn: "دفع بـ Pi",
+        acceptsPi: "يقبل Pi",
+        saveBtn: "☆ حفظ",
+        savedBtn: "★ محفوظ",
+        emptyText: "لا توجد أماكن مطابقة للبحث.",
+        piLogin: "دخول بحساب Pi",
+        piPay: "تجربة دفع 0.01 Pi",
+        piDisconnected: "غير متصل بـ Pi",
+        piConnected: "مرحباً: ",
+        readyMsg: "جاهز — اضغط على أي متجر أو زر لاختبار الاستجابة.",
+        closedMsg: "تم إغلاق النافذة.",
+        favUpdatedMsg: "تم تحديث المفضلة.",
+        catMsg: "التصنيف الحالي: ",
+        testPayMsg: "وضع تجريبي: تم الضغط على زر تجربة دفع 0.01 Pi.",
+        demoPayPrefix: "وضع تجريبي: دفع ",
+        demoPayFor: " Pi مقابل (",
+        piSdkMissing: "تنبيه: افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.",
+        piLoggingIn: "جاري تسجيل الدخول عبر Pi...",
+        piLoginSuccess: "تم الدخول بحساب Pi: ",
+        piLoginFail: "تعذر تسجيل الدخول عبر Pi: "
+      },
+      en: {
+        dir: "ltr",
+        lang: "en",
+        title: "Pi Places — Pi-Accepted Merchants Directory",
+        subtitle: "Directory of stores and services accepting Pi payment",
+        searchPlaceholder: "Search by store name or city...",
+        cats: {
+          "الكل": "All",
+          "مطاعم ومقاهي": "Food & Cafes",
+          "إلكترونيات": "Electronics",
+          "خدمات": "Services",
+          "مفضلة": "Favorites"
+        },
+        locationLabel: "Location:",
+        addressLabel: "Address:",
+        coordsLabel: "Coordinates:",
+        openMapBtn: "Open in Google Maps",
+        productsTitle: "Products, Services & Prices:",
+        payItemBtn: "Pay with Pi",
+        acceptsPi: "Accepts Pi",
+        saveBtn: "☆ Save",
+        savedBtn: "★ Saved",
+        emptyText: "No places match the current search.",
+        piLogin: "Sign in with Pi",
+        piPay: "Test Pay 0.01 Pi",
+        piDisconnected: "Not connected to Pi",
+        piConnected: "Hi: ",
+        readyMsg: "Ready — tap any place or button to test.",
+        closedMsg: "Modal closed.",
+        favUpdatedMsg: "Favorites updated.",
+        catMsg: "Current category: ",
+        testPayMsg: "Demo mode: Test Pay 0.01 Pi button clicked.",
+        demoPayPrefix: "Demo mode: Pay ",
+        demoPayFor: " Pi for (",
+        piSdkMissing: "Notice: Open inside Pi Browser to sign in with Pi.",
+        piLoggingIn: "Signing in with Pi...",
+        piLoginSuccess: "Signed in with Pi: ",
+        piLoginFail: "Pi sign-in failed: "
+      },
+      zh: {
+        dir: "ltr",
+        lang: "zh-CN",
+        title: "Pi Places — 支持 Pi 支付的商家指南",
+        subtitle: "支持 Pi 支付的门店与服务目录",
+        searchPlaceholder: "按商家名称或城市搜索...",
+        cats: {
+          "الكل": "全部",
+          "مطاعم ومقاهي": "餐饮与咖啡",
+          "إلكترونيات": "电子产品",
+          "خدمات": "生活服务",
+          "مفضلة": "收藏夹"
+        },
+        locationLabel: "位置：",
+        addressLabel: "地址：",
+        coordsLabel: "坐标：",
+        openMapBtn: "在谷歌地图中打开",
+        productsTitle: "商品、服务与价格：",
+        payItemBtn: "使用 Pi 支付",
+        acceptsPi: "支持 Pi",
+        saveBtn: "☆ 收藏",
+        savedBtn: "★ 已收藏",
+        emptyText: "没有符合当前搜索的商家。",
+        piLogin: "使用 Pi 登录",
+        piPay: "测试支付 0.01 Pi",
+        piDisconnected: "未连接 Pi",
+        piConnected: "你好：",
+        readyMsg: "已就绪 — 点击任意商家或按钮进行测试。",
+        closedMsg: "窗口已关闭。",
+        favUpdatedMsg: "收藏夹已更新。",
+        catMsg: "当前分类：",
+        testPayMsg: "演示模式：已点击测试支付 0.01 Pi 按钮。",
+        demoPayPrefix: "演示模式：支付 ",
+        demoPayFor: " Pi 购买（",
+        piSdkMissing: "提示：请在 Pi Browser 中打开以使用 Pi 登录。",
+        piLoggingIn: "正在使用 Pi 登录...",
+        piLoginSuccess: "已使用 Pi 登录：",
+        piLoginFail: "Pi 登录失败："
+      }
     };
 
     const places = [
@@ -407,10 +554,58 @@
       }
     ];
 
+    let currentLang = "ar";
     let favorites = [];
     let activeCategory = "الكل";
     let searchQuery = "";
+    let piUser = null;
+    let selectedPlaceId = null;
     let leafletMap = null;
+
+    const statusBanner = document.getElementById("statusBanner");
+    const gridEl = document.getElementById("placesGrid");
+    const searchEl = document.getElementById("searchInput");
+    const catBarEl = document.getElementById("categoryBar");
+    const langBarEl = document.getElementById("langBar");
+    const modalEl = document.getElementById("placeModal");
+    const modalContentEl = document.getElementById("modalContent");
+    const piLoginBtn = document.getElementById("piLoginBtn");
+    const piTestPayBtn = document.getElementById("piTestPayBtn");
+    const piStatusText = document.getElementById("piStatusText");
+
+    function setStatus(text) {
+      statusBanner.textContent = text;
+    }
+
+    window.onerror = function (msg, src, line) {
+      setStatus("خطأ في الكود: " + msg + " (السطر " + line + ")");
+    };
+
+    function applyLanguageTexts() {
+      const t = i18n[currentLang];
+      document.documentElement.dir = t.dir;
+      document.documentElement.lang = t.lang;
+      document.title = t.title;
+      document.getElementById("subtitleText").textContent = t.subtitle;
+      searchEl.placeholder = t.searchPlaceholder;
+      piLoginBtn.textContent = t.piLogin;
+      piTestPayBtn.textContent = t.piPay;
+
+      if (piUser && piUser.username) {
+        piStatusText.textContent = t.piConnected + piUser.username;
+      } else {
+        piStatusText.textContent = t.piDisconnected;
+      }
+
+      document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
+        const key = btn.dataset.cat;
+        if (t.cats[key]) btn.textContent = t.cats[key];
+      });
+
+      document.querySelectorAll("#langBar .lang-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.lang === currentLang);
+      });
+    }
 
     function initMap(lat, lng, title) {
       if (leafletMap) {
@@ -432,30 +627,33 @@
       }
     }
 
-    function openPlaceModal(id) {
+    function openPlaceModal(id, shouldInitMap = true) {
       const place = places.find((p) => p.id === id);
       if (!place) return;
+      selectedPlaceId = id;
+      const t = i18n[currentLang];
+      const catLabel = t.cats[place.category] || place.category;
       const mapUrl = `https://www.google.com/maps?q=${place.lat},${place.lng}`;
 
       modalContentEl.innerHTML = `
         <div class="modal-header">
           <div>
             <h2>${place.name}</h2>
-            <span class="tag">${place.category}</span>
+            <span class="tag">${catLabel}</span>
           </div>
           <button type="button" class="close-btn" id="closeModalBtn">✕</button>
         </div>
 
         <div class="address-box">
-          <div><strong>الموقع:</strong> ${place.city}</div>
-          <div><strong>العنوان:</strong> ${place.address}</div>
-          <div><strong>الإحداثيات:</strong> ${place.lat}, ${place.lng}</div>
-          <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">فتح في خرائط جوجل</a>
+          <div><strong>${t.locationLabel}</strong> ${place.city}</div>
+          <div><strong>${t.addressLabel}</strong> ${place.address}</div>
+          <div><strong>${t.coordsLabel}</strong> ${place.lat}, ${place.lng}</div>
+          <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">${t.openMapBtn}</a>
         </div>
 
         <div id="placeMap"></div>
 
-        <div><strong>المنتجات والخدمات والأسعار:</strong></div>
+        <div><strong>${t.productsTitle}</strong></div>
         ${place.products
           .map(
             (prod) => `
@@ -464,7 +662,7 @@
                 <div><strong>${prod.title}</strong></div>
                 <div class="product-price">${prod.pricePi} Pi</div>
               </div>
-              <button type="button" class="buy-pi-btn" data-amount="${prod.pricePi}" data-item="${prod.title}">دفع بـ Pi</button>
+              <button type="button" class="buy-pi-btn" data-amount="${prod.pricePi}" data-item="${prod.title}">${t.payItemBtn}</button>
             </div>
           `
           )
@@ -472,20 +670,25 @@
       `;
 
       modalEl.classList.add("open");
-      initMap(place.lat, place.lng, place.name);
-      setStatus("تم فتح: " + place.name);
+      if (shouldInitMap) {
+        initMap(place.lat, place.lng, place.name);
+      }
     }
 
     function closeModal() {
+      selectedPlaceId = null;
       if (leafletMap) {
         leafletMap.remove();
         leafletMap = null;
       }
       modalEl.classList.remove("open");
-      setStatus("تم إغلاق النافذة.");
+      setStatus(i18n[currentLang].closedMsg);
     }
 
-    function renderPlaces() {
+    function renderPlaces(syncOpenModal = false) {
+      applyLanguageTexts();
+      const t = i18n[currentLang];
+
       const filtered = places.filter((p) => {
         const matchCat =
           activeCategory === "الكل" ||
@@ -500,30 +703,41 @@
       });
 
       if (!filtered.length) {
-        gridEl.innerHTML = `<div class="card">لا توجد أماكن مطابقة للبحث.</div>`;
+        gridEl.innerHTML = `<div class="card">${t.emptyText}</div>`;
         return;
       }
 
       gridEl.innerHTML = filtered
         .map((p) => {
           const isFav = favorites.includes(p.id);
+          const catLabel = t.cats[p.category] || p.category;
           return `
             <article class="card" data-place-id="${p.id}">
               <div>
                 <h2>${p.name}</h2>
-                <span class="tag">${p.category}</span>
-                <p class="meta">الموقع: ${p.city}</p>
+                <span class="tag">${catLabel}</span>
+                <p class="meta">${t.locationLabel} ${p.city}</p>
               </div>
               <div class="card-actions">
-                <span class="pi-accepted">يقبل Pi</span>
+                <span class="pi-accepted">${t.acceptsPi}</span>
                 <button type="button" class="fav-btn ${isFav ? "saved" : ""}" data-fav-id="${p.id}">
-                  ${isFav ? "★ محفوظ" : "☆ حفظ"}
+                  ${isFav ? t.savedBtn : t.saveBtn}
                 </button>
               </div>
             </article>
           `;
         })
         .join("");
+
+      if (syncOpenModal && selectedPlaceId !== null) {
+        openPlaceModal(selectedPlaceId, true);
+      }
+    }
+
+    function triggerDemoPayment(amount, itemTitle) {
+      const t = i18n[currentLang];
+      const suffix = currentLang === "zh" ? "）" : ")";
+      setStatus(t.demoPayPrefix + amount + t.demoPayFor + itemTitle + suffix);
     }
 
     gridEl.addEventListener("click", (e) => {
@@ -534,14 +748,19 @@
         favorites = favorites.includes(id)
           ? favorites.filter((x) => x !== id)
           : [...favorites, id];
-        renderPlaces();
-        setStatus("تم تحديث المفضلة.");
+        renderPlaces(false);
+        setStatus(i18n[currentLang].favUpdatedMsg);
         return;
       }
 
       const card = e.target.closest("[data-place-id]");
       if (card) {
-        openPlaceModal(Number(card.dataset.placeId));
+        const id = Number(card.dataset.placeId);
+        const place = places.find((p) => p.id === id);
+        openPlaceModal(id, true);
+        if (place) {
+          setStatus(place.name);
+        }
       }
     });
 
@@ -552,10 +771,15 @@
       }
       const payBtn = e.target.closest(".buy-pi-btn");
       if (payBtn) {
-        setStatus(
-          "وضع تجريبي: دفع " + payBtn.dataset.amount + " Pi مقابل (" + payBtn.dataset.item + ")."
-        );
+        triggerDemoPayment(payBtn.dataset.amount, payBtn.dataset.item);
       }
+    });
+
+    langBarEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".lang-btn");
+      if (!btn) return;
+      currentLang = btn.dataset.lang;
+      renderPlaces(true);
     });
 
     catBarEl.addEventListener("click", (e) => {
@@ -564,24 +788,42 @@
       document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       activeCategory = btn.dataset.cat;
-      renderPlaces();
-      setStatus("التصنيف الحالي: " + activeCategory);
+      renderPlaces(false);
+      const catText = i18n[currentLang].cats[activeCategory] || activeCategory;
+      setStatus(i18n[currentLang].catMsg + catText);
     });
 
     searchEl.addEventListener("input", (e) => {
       searchQuery = e.target.value;
-      renderPlaces();
+      renderPlaces(false);
     });
 
-    document.getElementById("piTestPayBtn").addEventListener("click", () => {
-      setStatus("وضع تجريبي: تم الضغط على زر تجربة دفع 0.01 Pi.");
+    piTestPayBtn.addEventListener("click", () => {
+      setStatus(i18n[currentLang].testPayMsg);
     });
 
-    document.getElementById("piLoginBtn").addEventListener("click", () => {
-      setStatus("تم الضغط على زر دخول بحساب Pi.");
+    piLoginBtn.addEventListener("click", async () => {
+      const t = i18n[currentLang];
+      setStatus(t.piLoggingIn);
+      if (!window.Pi) {
+        setStatus(t.piSdkMissing);
+        return;
+      }
+      try {
+        window.Pi.init({ version: "2.0", sandbox: true });
+        const auth = await window.Pi.authenticate(["username", "payments"], () => {});
+        piUser = auth.user || null;
+        renderPlaces(selectedPlaceId !== null);
+        const username = piUser && piUser.username ? piUser.username : "Pioneer";
+        setStatus(t.piLoginSuccess + username);
+      } catch (err) {
+        const msg = err && err.message ? err.message : String(err);
+        setStatus(t.piLoginFail + msg);
+      }
     });
 
-    renderPlaces();
+    renderPlaces(false);
+    setStatus(i18n[currentLang].readyMsg);
   </script>
 </body>
 </html>
