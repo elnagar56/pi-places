@@ -3,829 +3,488 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#5c2d91" />
+  <title>Pi Places</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <title>Pi Places — دليل الأماكن الداعمة لـ Pi</title>
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
-      --pi-purple: #5c2d91;
-      --pi-purple-dark: #3f1c66;
-      --pi-gold: #f5b700;
-      --bg: #f6f4fa;
+      --bg: #f5f3fa;
       --card: #ffffff;
-      --text: #1e1b2e;
-      --muted: #66617a;
+      --primary: #5b2c83;
+      --primary-dark: #431d63;
+      --accent: #f4b400;
+      --text: #1f1b24;
+      --muted: #665f70;
       --border: #e4dff0;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
-    }
-
+    * { box-sizing: border-box; }
     body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.6;
-      padding-bottom: 48px;
     }
-
     header {
-      background: linear-gradient(135deg, var(--pi-purple-dark), var(--pi-purple));
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
-      padding: 20px 16px 26px;
+      padding: 20px 16px 24px;
       text-align: center;
     }
-
-    header h1 {
-      font-size: 1.55rem;
-      margin-bottom: 4px;
-    }
-
-    header p {
-      font-size: 0.9rem;
-      opacity: 0.92;
-    }
-
-    .lang-bar {
-      margin-top: 10px;
+    header h1 { margin: 0 0 6px; font-size: 1.7rem; }
+    header p { margin: 0 0 14px; opacity: 0.92; font-size: 0.95rem; }
+    .bar {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       justify-content: center;
-      flex-wrap: wrap;
+      margin-top: 10px;
     }
-
-    .lang-btn {
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      background: rgba(255, 255, 255, 0.16);
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+    .btn-lang { background: rgba(255,255,255,0.16); color: #fff; }
+    .btn-lang.active { background: #fff; color: var(--primary); }
+    .btn-login { background: var(--accent); color: #1b1500; }
+    .btn-demo { background: #fff; color: var(--primary); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      background: rgba(0,0,0,0.22);
       color: #fff;
-      padding: 4px 12px;
+      padding: 6px 12px;
       border-radius: 999px;
       font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
     }
-
-    .lang-btn.active {
-      background: #fff;
-      color: var(--pi-purple-dark);
-      border-color: #fff;
-      font-weight: 700;
-    }
-
-    .pi-bar {
-      margin-top: 12px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .pi-btn {
-      background: var(--pi-gold);
-      color: #1e1b2e;
-      border: none;
-      padding: 7px 14px;
-      border-radius: 999px;
-      font-size: 0.84rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .pi-btn.secondary {
-      background: #ffffff;
-      color: var(--pi-purple-dark);
-    }
-
-    .pi-status {
-      font-size: 0.8rem;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
-
-    .container {
-      max-width: 820px;
+    .toast {
+      max-width: 900px;
       margin: 12px auto 0;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #fff7db;
+      border: 1px solid #ecd27a;
+      color: #4a3700;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .controls {
+      max-width: 900px;
+      margin: 14px auto;
       padding: 0 14px;
     }
-
-    #statusBanner {
-      background: #fff8e1;
-      color: #6b4c00;
-      border: 1px solid var(--pi-gold);
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 0.88rem;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-
-    .controls {
+    .panel {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 14px;
+      padding: 12px;
     }
-
-    .search-input {
+    input[type="search"] {
       width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
+      padding: 10px 12px;
       border-radius: 10px;
-      font-size: 0.92rem;
+      border: 1px solid var(--border);
+      font-size: 0.95rem;
       margin-bottom: 10px;
     }
-
-    .categories {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .cat-btn {
-      border: 1px solid var(--border);
-      background: var(--bg);
-      color: var(--text);
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 0.83rem;
-      cursor: pointer;
-    }
-
-    .cat-btn.active {
-      background: var(--pi-purple);
-      color: #fff;
-      border-color: var(--pi-purple);
-      font-weight: 600;
-    }
-
+    .cats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cat-btn { background: #f1edf8; color: var(--text); }
+    .cat-btn.active { background: var(--primary); color: #fff; }
     .grid {
+      max-width: 900px;
+      margin: 0 auto 28px;
+      padding: 0 14px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 12px;
     }
-
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 15px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       gap: 10px;
-      cursor: pointer;
     }
-
-    .card h2 {
-      font-size: 1.03rem;
-      color: var(--pi-purple-dark);
-    }
-
     .tag {
       display: inline-block;
-      background: #efeaf8;
-      color: var(--pi-purple);
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 8px;
+      background: #efe9f7;
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
       font-weight: 600;
-      margin-top: 4px;
     }
-
-    .meta {
-      font-size: 0.85rem;
-      color: var(--muted);
+    .title {
+      margin: 8px 0 4px;
+      font-size: 1.08rem;
+      cursor: pointer;
+      color: var(--primary-dark);
     }
-
+    .loc { color: var(--muted); font-size: 0.88rem; margin: 0; }
     .card-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
       padding-top: 8px;
       border-top: 1px solid var(--border);
     }
-
-    .pi-accepted {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #16794c;
-    }
-
-    .fav-btn {
-      border: 1px solid var(--border);
-      background: #fff;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    .fav-btn.saved {
-      background: #fff8e1;
-      border-color: var(--pi-gold);
-      color: #8a6200;
-      font-weight: 700;
-    }
-
-    .modal-backdrop {
+    .fav-btn { background: #f5f3fa; color: var(--text); padding: 7px 11px; }
+    .fav-btn.saved { background: #fff0c2; color: #593b00; }
+    .pay-btn { background: var(--primary); color: #fff; padding: 7px 12px; }
+    .open-btn { background: #efe9f7; color: var(--primary); padding: 7px 11px; }
+    .modal-bg {
       position: fixed;
       inset: 0;
-      background: rgba(20, 14, 34, 0.65);
+      background: rgba(0,0,0,0.55);
       display: none;
       align-items: center;
       justify-content: center;
       padding: 14px;
       z-index: 999;
     }
-
-    .modal-backdrop.open {
-      display: flex;
-    }
-
     .modal-box {
-      background: var(--card);
-      border-radius: 16px;
-      max-width: 540px;
+      background: #fff;
+      color: var(--text);
       width: 100%;
+      max-width: 500px;
+      border-radius: 16px;
+      padding: 16px;
       max-height: 88vh;
       overflow-y: auto;
-      padding: 18px;
     }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    .close-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 4px 10px;
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .address-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-      font-size: 0.88rem;
-    }
-
-    #placeMap {
-      height: 185px;
+    #mapBox {
       width: 100%;
+      height: 200px;
       border-radius: 12px;
+      margin: 10px 0 12px;
       border: 1px solid var(--border);
-      margin-bottom: 12px;
     }
-
-    .map-link {
-      display: inline-block;
-      margin-top: 8px;
-      background: var(--pi-purple);
-      color: #fff;
-      text-decoration: none;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-
-    .product-item {
+    .prod-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
       gap: 10px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-top: 8px;
-      background: #fcfbfe;
     }
-
-    .product-price {
-      font-size: 0.84rem;
-      color: #16794c;
-      font-weight: 700;
-    }
-
-    .buy-pi-btn {
-      background: var(--pi-gold);
-      color: #1e1b2e;
-      border: none;
-      padding: 6px 11px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
+    .ic { width: 16px; height: 16px; flex: 0 0 16px; display: inline-block; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Pi Places</h1>
-    <p id="subtitleText">دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
+    <h1 id="appTitle">Pi Places</h1>
+    <p id="appSub">دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi</p>
 
-    <div class="lang-bar" id="langBar">
-      <button type="button" class="lang-btn active" data-lang="ar">العربية</button>
-      <button type="button" class="lang-btn" data-lang="en">English</button>
-      <button type="button" class="lang-btn" data-lang="zh">中文</button>
+    <div class="bar">
+      <button class="btn-lang active" data-lang="ar" onclick="setLang('ar')">العربية</button>
+      <button class="btn-lang" data-lang="en" onclick="setLang('en')">English</button>
+      <button class="btn-lang" data-lang="zh" onclick="setLang('zh')">中文</button>
     </div>
 
-    <div class="pi-bar">
-      <button type="button" class="pi-btn" id="piLoginBtn">دخول بحساب Pi</button>
-      <button type="button" class="pi-btn secondary" id="piTestPayBtn">تجربة دفع 0.01 Pi</button>
-      <span class="pi-status" id="piStatusText">غير متصل بـ Pi</span>
+    <div class="bar">
+      <button class="btn-login" onclick="piLogin()">
+        <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/></svg>
+        <span id="loginText">دخول بحساب Pi</span>
+      </button>
+      <button class="btn-demo" onclick="demoPay('Pi Places Demo', 0.01)">
+        <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 15h-2v-2h2Zm0-4h-2V7h2Z"/></svg>
+        <span id="demoText">تجربة دفع 0.01 Pi</span>
+      </button>
+    </div>
+
+    <div>
+      <span class="status-pill" id="statusPill">
+        <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>
+        <span id="statusText">غير متصل بـ Pi</span>
+      </span>
     </div>
   </header>
 
-  <main class="container">
-    <div id="statusBanner">جاهز — اضغط على أي متجر أو زر لاختبار الاستجابة.</div>
+  <div class="toast" id="toastBox"></div>
 
-    <section class="controls">
-      <input id="searchInput" class="search-input" type="text" placeholder="ابحث باسم المتجر أو المدينة..." />
-      <div class="categories" id="categoryBar">
-        <button type="button" class="cat-btn active" data-cat="الكل">الكل</button>
-        <button type="button" class="cat-btn" data-cat="مطاعم ومقاهي">مطاعم ومقاهي</button>
-        <button type="button" class="cat-btn" data-cat="إلكترونيات">إلكترونيات</button>
-        <button type="button" class="cat-btn" data-cat="خدمات">خدمات</button>
-        <button type="button" class="cat-btn" data-cat="مفضلة">المفضلة</button>
-      </div>
-    </section>
-
-    <section class="grid" id="placesGrid"></section>
-  </main>
-
-  <div class="modal-backdrop" id="placeModal">
-    <div class="modal-box" id="modalContent"></div>
+  <div class="controls">
+    <div class="panel">
+      <input type="search" id="searchInput" placeholder="ابحث باسم المتجر أو المدينة..." oninput="renderPlaces()" />
+      <div class="cats" id="catsBar"></div>
+    </div>
   </div>
 
-  <script>
-    const i18n = {
-      ar: {
-        dir: "rtl",
-        lang: "ar",
-        title: "Pi Places — دليل الأماكن الداعمة لـ Pi",
-        subtitle: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
-        searchPlaceholder: "ابحث باسم المتجر أو المدينة...",
-        cats: {
-          "الكل": "الكل",
-          "مطاعم ومقاهي": "مطاعم ومقاهي",
-          "إلكترونيات": "إلكترونيات",
-          "خدمات": "خدمات",
-          "مفضلة": "المفضلة"
-        },
-        locationLabel: "الموقع:",
-        addressLabel: "العنوان:",
-        coordsLabel: "الإحداثيات:",
-        openMapBtn: "فتح في خرائط جوجل",
-        productsTitle: "المنتجات والخدمات والأسعار:",
-        payItemBtn: "دفع بـ Pi",
-        acceptsPi: "يقبل Pi",
-        saveBtn: "☆ حفظ",
-        savedBtn: "★ محفوظ",
-        emptyText: "لا توجد أماكن مطابقة للبحث.",
-        piLogin: "دخول بحساب Pi",
-        piPay: "تجربة دفع 0.01 Pi",
-        piDisconnected: "غير متصل بـ Pi",
-        piConnected: "مرحباً: ",
-        readyMsg: "جاهز — اضغط على أي متجر أو زر لاختبار الاستجابة.",
-        closedMsg: "تم إغلاق النافذة.",
-        favUpdatedMsg: "تم تحديث المفضلة.",
-        catMsg: "التصنيف الحالي: ",
-        testPayMsg: "وضع تجريبي: تجربة دفع 0.01 Pi (يتطلب خادماً للدفع الفعلي).",
-        demoPayPrefix: "وضع تجريبي: دفع ",
-        demoPayFor: " Pi مقابل (",
-        piSdkMissing: "تنبيه: افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.",
-        piLoggingIn: "جاري تسجيل الدخول عبر Pi...",
-        piLoginSuccess: "تم الدخول بحساب Pi: ",
-        piLoginFail: "تعذر تسجيل الدخول عبر Pi: "
-      },
-      en: {
-        dir: "ltr",
-        lang: "en",
-        title: "Pi Places — Pi-Accepted Merchants Directory",
-        subtitle: "Directory of stores and services accepting Pi payment",
-        searchPlaceholder: "Search by store name or city...",
-        cats: {
-          "الكل": "All",
-          "مطاعم ومقاهي": "Food & Cafes",
-          "إلكترونيات": "Electronics",
-          "خدمات": "Services",
-          "مفضلة": "Favorites"
-        },
-        locationLabel: "Location:",
-        addressLabel: "Address:",
-        coordsLabel: "Coordinates:",
-        openMapBtn: "Open in Google Maps",
-        productsTitle: "Products, Services & Prices:",
-        payItemBtn: "Pay with Pi",
-        acceptsPi: "Accepts Pi",
-        saveBtn: "☆ Save",
-        savedBtn: "★ Saved",
-        emptyText: "No places match the current search.",
-        piLogin: "Sign in with Pi",
-        piPay: "Test Pay 0.01 Pi",
-        piDisconnected: "Not connected to Pi",
-        piConnected: "Hi: ",
-        readyMsg: "Ready — tap any place or button to test.",
-        closedMsg: "Modal closed.",
-        favUpdatedMsg: "Favorites updated.",
-        catMsg: "Current category: ",
-        testPayMsg: "Demo mode: Test Pay 0.01 Pi (live payment requires a backend server).",
-        demoPayPrefix: "Demo mode: Pay ",
-        demoPayFor: " Pi for (",
-        piSdkMissing: "Notice: Open inside Pi Browser to sign in with Pi.",
-        piLoggingIn: "Signing in with Pi...",
-        piLoginSuccess: "Signed in with Pi: ",
-        piLoginFail: "Pi sign-in failed: "
-      },
-      zh: {
-        dir: "ltr",
-        lang: "zh-CN",
-        title: "Pi Places — 支持 Pi 支付的商家指南",
-        subtitle: "支持 Pi 支付的门店与服务目录",
-        searchPlaceholder: "按商家名称或城市搜索...",
-        cats: {
-          "الكل": "全部",
-          "مطاعم ومقاهي": "餐饮与咖啡",
-          "إلكترونيات": "电子产品",
-          "خدمات": "生活服务",
-          "مفضلة": "收藏夹"
-        },
-        locationLabel: "位置：",
-        addressLabel: "地址：",
-        coordsLabel: "坐标：",
-        openMapBtn: "在谷歌地图中打开",
-        productsTitle: "商品、服务与价格：",
-        payItemBtn: "使用 Pi 支付",
-        acceptsPi: "支持 Pi",
-        saveBtn: "☆ 收藏",
-        savedBtn: "★ 已收藏",
-        emptyText: "没有符合当前搜索的商家。",
-        piLogin: "使用 Pi 登录",
-        piPay: "测试支付 0.01 Pi",
-        piDisconnected: "未连接 Pi",
-        piConnected: "你好：",
-        readyMsg: "已就绪 — 点击任意商家或按钮进行测试。",
-        closedMsg: "窗口已关闭。",
-        favUpdatedMsg: "收藏夹已更新。",
-        catMsg: "当前分类：",
-        testPayMsg: "演示模式：测试支付 0.01 Pi（真实支付需要后端服务器）。",
-        demoPayPrefix: "演示模式：支付 ",
-        demoPayFor: " Pi 购买（",
-        piSdkMissing: "提示：请在 Pi Browser 中打开以使用 Pi 登录。",
-        piLoggingIn: "正在使用 Pi 登录...",
-        piLoginSuccess: "已使用 Pi 登录：",
-        piLoginFail: "Pi 登录失败："
-      }
-    };
+  <section class="grid" id="placesGrid"></section>
 
+  <div class="modal-bg" id="placeModal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <h3 id="modalTitle" style="margin:0;"></h3>
+        <button onclick="closeModal()" id="closeBtn" style="background:#eee;color:#222;padding:6px 10px;">إغلاق</button>
+      </div>
+      <p id="modalLoc" class="loc" style="margin:6px 0 6px;"></p>
+      <div id="mapBox"></div>
+      <div id="modalProducts"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
     const places = [
       {
-        id: 1,
-        name: "واحة البن للقهوة",
-        city: "القاهرة",
-        address: "المعادي، شارع 9، بجوار محطة المترو",
-        lat: 29.9602,
-        lng: 31.2569,
-        category: "مطاعم ومقاهي",
+        id: 1, name: "واحة البن للقهوة", cat: "cafe", loc: "القاهرة", lat: 30.0444, lng: 31.2357,
         products: [
-          { title: "قهوة عربية مختصة", pricePi: 0.5 },
-          { title: "إسبريسو مزدوج + كرواسون", pricePi: 0.8 }
+          { name: "قهوة تركي مضبوط", price: 0.25 },
+          { name: "لاتيه ساخن", price: 0.40 }
         ]
       },
       {
-        id: 2,
-        name: "تك زون للصيانة",
-        city: "الإسكندرية",
-        address: "سموحة، شارع فوزي معاذ، برج النصر",
-        lat: 31.2156,
-        lng: 29.9553,
-        category: "إلكترونيات",
+        id: 2, name: "تك زون للصيانة", cat: "tech", loc: "الإسكندرية", lat: 31.2001, lng: 29.9187,
         products: [
-          { title: "فحص وتشخيص أعطال الهواتف", pricePi: 1.0 },
-          { title: "شاحن سريع أصلي", pricePi: 1.5 }
+          { name: "فحص وتشخيص جهاز", price: 1.50 },
+          { name: "تنظيف وتغيير معجون", price: 2.00 }
         ]
       },
       {
-        id: 3,
-        name: "ركن الساحل للمأكولات",
-        city: "مرسى مطروح",
-        address: "كورنيش مرسى مطروح، أمام شاطئ البسنت",
-        lat: 31.3543,
-        lng: 27.2373,
-        category: "مطاعم ومقاهي",
+        id: 3, name: "ركن الساحل للمأكولات", cat: "cafe", loc: "مرسى مطروح", lat: 31.3543, lng: 27.2373,
         products: [
-          { title: "وجبة أسماك بحرية مشوية", pricePi: 2.5 },
-          { title: "عصير ليمون بالنعناع طازج", pricePi: 0.4 }
+          { name: "وجبة فطار شرقي", price: 0.40 },
+          { name: "عصير فريش", price: 0.20 }
         ]
       },
       {
-        id: 4,
-        name: "استوديو تصميم ويب",
-        city: "الجيزة",
-        address: "الدقي، شارع التحرير، الدور الثالث",
-        lat: 30.0385,
-        lng: 31.2127,
-        category: "خدمات",
+        id: 4, name: "مركز الخدمات الرقمية", cat: "services", loc: "الجيزة", lat: 30.0131, lng: 31.2089,
         products: [
-          { title: "تصميم صفحة تعريفية متجاوبة", pricePi: 5.0 },
-          { title: "استشارة ربط تطبيق ويب بـ Pi", pricePi: 3.0 }
+          { name: "إعداد صفحة ويب", price: 0.80 },
+          { name: "مراجعة تقنية", price: 1.20 }
         ]
       }
     ];
 
-    let currentLang = "ar";
-    let favorites = [];
-    let activeCategory = "الكل";
-    let searchQuery = "";
-    let piUser = null;
-    let selectedPlaceId = null;
-    let leafletMap = null;
-
-    const statusBanner = document.getElementById("statusBanner");
-    const gridEl = document.getElementById("placesGrid");
-    const searchEl = document.getElementById("searchInput");
-    const catBarEl = document.getElementById("categoryBar");
-    const langBarEl = document.getElementById("langBar");
-    const modalEl = document.getElementById("placeModal");
-    const modalContentEl = document.getElementById("modalContent");
-    const piLoginBtn = document.getElementById("piLoginBtn");
-    const piTestPayBtn = document.getElementById("piTestPayBtn");
-    const piStatusText = document.getElementById("piStatusText");
-
-    function setStatus(text) {
-      statusBanner.textContent = text;
-    }
-
-    window.onerror = function (msg, src, line) {
-      setStatus("خطأ في الكود: " + msg + " (السطر " + line + ")");
+    const i18n = {
+      ar: {
+        title: "Pi Places",
+        sub: "دليل المتاجر والخدمات التي تقبل الدفع بعملة Pi",
+        login: "دخول بحساب Pi",
+        demo: "تجربة دفع 0.01 Pi",
+        disconnected: "غير متصل بـ Pi",
+        connected: "متصل بحساب Pi: ",
+        search: "ابحث باسم المتجر أو المدينة...",
+        all: "الكل",
+        cafe: "مطاعم ومقاهي",
+        tech: "إلكترونيات",
+        services: "خدمات",
+        favs: "المفضلة",
+        save: "حفظ",
+        saved: "محفوظ",
+        details: "المنتجات والخريطة",
+        pay: "دفع Pi",
+        close: "إغلاق",
+        demoMsg: "وضع تجريبي: تم محاكاة دفع {amount} Pi لـ {name} بدون فتح المحفظة.",
+        loginMsg: "تم تسجيل الدخول التجريبي بحساب Pi داخل التطبيق."
+      },
+      en: {
+        title: "Pi Places",
+        sub: "Directory of stores and services accepting Pi",
+        login: "Sign in with Pi",
+        demo: "Demo Pay 0.01 Pi",
+        disconnected: "Not connected to Pi",
+        connected: "Connected as: ",
+        search: "Search store or city...",
+        all: "All",
+        cafe: "Cafes & Food",
+        tech: "Electronics",
+        services: "Services",
+        favs: "Favorites",
+        save: "Save",
+        saved: "Saved",
+        details: "Menu & Map",
+        pay: "Pay Pi",
+        close: "Close",
+        demoMsg: "Demo mode: Simulated {amount} Pi payment for {name} without opening Wallet.",
+        loginMsg: "Demo Pi sign-in activated inside the app."
+      },
+      zh: {
+        title: "Pi Places",
+        sub: "支持 Pi 支付的商家与服务目录",
+        login: "使用 Pi 登录",
+        demo: "模拟支付 0.01 Pi",
+        disconnected: "未连接 Pi",
+        connected: "已连接账户：",
+        search: "搜索商家或城市...",
+        all: "全部",
+        cafe: "餐饮咖啡",
+        tech: "电子数码",
+        services: "生活服务",
+        favs: "收藏",
+        save: "收藏",
+        saved: "已收藏",
+        details: "商品与地图",
+        pay: "Pi 支付",
+        close: "关闭",
+        demoMsg: "演示模式：已为 {name} 模拟支付 {amount} Pi（未打开钱包）。",
+        loginMsg: "已在应用内激活 Pi 演示登录。"
+      }
     };
 
-    function applyLanguageTexts() {
-      const t = i18n[currentLang];
-      document.documentElement.dir = t.dir;
-      document.documentElement.lang = t.lang;
-      document.title = t.title;
-      document.getElementById("subtitleText").textContent = t.subtitle;
-      searchEl.placeholder = t.searchPlaceholder;
-      piLoginBtn.textContent = t.piLogin;
-      piTestPayBtn.textContent = t.piPay;
+    let lang = "ar";
+    let cat = "all";
+    let user = null;
+    let favs = JSON.parse(localStorage.getItem("pi_places_favs") || "[]");
+    let mapInstance = null;
 
-      if (piUser && piUser.username) {
-        piStatusText.textContent = t.piConnected + piUser.username;
-      } else {
-        piStatusText.textContent = t.piDisconnected;
-      }
-
-      document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
-        const key = btn.dataset.cat;
-        if (t.cats[key]) btn.textContent = t.cats[key];
-      });
-
-      document.querySelectorAll("#langBar .lang-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.lang === currentLang);
-      });
+    function showToast(msg) {
+      const box = document.getElementById("toastBox");
+      box.textContent = msg;
+      box.style.display = "block";
     }
 
-    function initMap(lat, lng, title) {
-      try {
-        if (leafletMap) {
-          leafletMap.remove();
-          leafletMap = null;
-        }
-        if (!window.L || !document.getElementById("placeMap")) return;
-        leafletMap = L.map("placeMap").setView([lat, lng], 14);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap"
-        }).addTo(leafletMap);
-        L.marker([lat, lng]).addTo(leafletMap).bindPopup(title).openPopup();
-        setTimeout(() => {
-          if (leafletMap) leafletMap.invalidateSize();
-        }, 150);
-      } catch (e) {
-        setStatus("تنبيه الخريطة: " + e.message);
-      }
+    function setLang(newLang) {
+      lang = newLang;
+      document.documentElement.lang = newLang;
+      document.documentElement.dir = newLang === "ar" ? "rtl" : "ltr";
+      document.querySelectorAll(".btn-lang").forEach(b => {
+        b.classList.toggle("active", b.dataset.lang === newLang);
+      });
+      const t = i18n[lang];
+      document.getElementById("appTitle").textContent = t.title;
+      document.getElementById("appSub").textContent = t.sub;
+      document.getElementById("loginText").textContent = t.login;
+      document.getElementById("demoText").textContent = t.demo;
+      document.getElementById("searchInput").placeholder = t.search;
+      document.getElementById("closeBtn").textContent = t.close;
+      updateStatus();
+      renderCats();
+      renderPlaces();
     }
 
-    function openPlaceModal(id, shouldInitMap = true) {
-      const place = places.find((p) => p.id === id);
-      if (!place) return;
-      selectedPlaceId = id;
-      const t = i18n[currentLang];
-      const catLabel = t.cats[place.category] || place.category;
-      const mapUrl = `https://www.google.com/maps?q=${place.lat},${place.lng}`;
+    function updateStatus() {
+      const t = i18n[lang];
+      document.getElementById("statusText").textContent = user ? (t.connected + user) : t.disconnected;
+    }
 
-      modalContentEl.innerHTML = `
-        <div class="modal-header">
+    function piLogin() {
+      user = "@tamer_pi";
+      updateStatus();
+      showToast(i18n[lang].loginMsg);
+    }
+
+    function demoPay(name, amount) {
+      closeModal();
+      const msg = i18n[lang].demoMsg.replace("{amount}", amount).replace("{name}", name);
+      showToast(msg);
+    }
+
+    function toggleFav(id) {
+      if (favs.includes(id)) favs = favs.filter(x => x !== id);
+      else favs.push(id);
+      localStorage.setItem("pi_places_favs", JSON.stringify(favs));
+      renderPlaces();
+    }
+
+    function renderCats() {
+      const t = i18n[lang];
+      const list = [
+        ["all", t.all],
+        ["cafe", t.cafe],
+        ["tech", t.tech],
+        ["services", t.services],
+        ["favs", t.favs]
+      ];
+      document.getElementById("catsBar").innerHTML = list.map(([key, label]) =>
+        `<button class="cat-btn ${cat === key ? "active" : ""}" onclick="setCat('${key}')">${label}</button>`
+      ).join("");
+    }
+
+    function setCat(newCat) {
+      cat = newCat;
+      renderCats();
+      renderPlaces();
+    }
+
+    function openPlace(id) {
+      const p = places.find(item => item.id === id);
+      if (!p) return;
+      const t = i18n[lang];
+      document.getElementById("modalTitle").textContent = p.name;
+      document.getElementById("modalLoc").textContent = p.loc;
+      document.getElementById("modalProducts").innerHTML = p.products.map(pr => `
+        <div class="prod-row">
           <div>
-            <h2>${place.name}</h2>
-            <span class="tag">${catLabel}</span>
+            <strong>${pr.name}</strong><br/>
+            <span class="loc">${pr.price} Pi</span>
           </div>
-          <button type="button" class="close-btn" id="closeModalBtn">✕</button>
+          <button class="pay-btn" onclick="demoPay('${p.name} - ${pr.name}', ${pr.price})">
+            ${t.pay}
+          </button>
         </div>
+      `).join("");
 
-        <div class="address-box">
-          <div><strong>${t.locationLabel}</strong> ${place.city}</div>
-          <div><strong>${t.addressLabel}</strong> ${place.address}</div>
-          <div><strong>${t.coordsLabel}</strong> ${place.lat}, ${place.lng}</div>
-          <a class="map-link" href="${mapUrl}" target="_blank" rel="noopener noreferrer">${t.openMapBtn}</a>
-        </div>
+      document.getElementById("placeModal").style.display = "flex";
 
-        <div id="placeMap"></div>
-
-        <div><strong>${t.productsTitle}</strong></div>
-        ${place.products
-          .map(
-            (prod) => `
-            <div class="product-item">
-              <div>
-                <div><strong>${prod.title}</strong></div>
-                <div class="product-price">${prod.pricePi} Pi</div>
-              </div>
-              <button type="button" class="buy-pi-btn" data-amount="${prod.pricePi}" data-item="${prod.title}">${t.payItemBtn}</button>
-            </div>
-          `
-          )
-          .join("")}
-      `;
-
-      modalEl.classList.add("open");
-      if (shouldInitMap) {
-        initMap(place.lat, place.lng, place.name);
-      }
+      setTimeout(() => {
+        if (mapInstance) {
+          mapInstance.remove();
+          mapInstance = null;
+        }
+        if (typeof L !== "undefined") {
+          mapInstance = L.map("mapBox").setView([p.lat, p.lng], 13);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "&copy; OpenStreetMap"
+          }).addTo(mapInstance);
+          L.marker([p.lat, p.lng]).addTo(mapInstance).bindPopup(p.name).openPopup();
+        }
+      }, 80);
     }
 
     function closeModal() {
-      selectedPlaceId = null;
-      if (leafletMap) {
-        try {
-          leafletMap.remove();
-        } catch (e) {}
-        leafletMap = null;
-      }
-      modalEl.classList.remove("open");
-      setStatus(i18n[currentLang].closedMsg);
+      document.getElementById("placeModal").style.display = "none";
     }
 
-    function renderPlaces(syncOpenModal = false) {
-      applyLanguageTexts();
-      const t = i18n[currentLang];
-
-      const filtered = places.filter((p) => {
+    function renderPlaces() {
+      const t = i18n[lang];
+      const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+      const filtered = places.filter(p => {
         const matchCat =
-          activeCategory === "الكل" ||
-          (activeCategory === "مفضلة" ? favorites.includes(p.id) : p.category === activeCategory);
-        const q = searchQuery.trim().toLowerCase();
-        const matchSearch =
-          !q ||
-          p.name.toLowerCase().includes(q) ||
-          p.city.toLowerCase().includes(q) ||
-          p.address.toLowerCase().includes(q);
-        return matchCat && matchSearch;
+          cat === "all" ||
+          (cat === "favs" ? favs.includes(p.id) : p.cat === cat);
+        const matchQ = !q || p.name.toLowerCase().includes(q) || p.loc.toLowerCase().includes(q);
+        return matchCat && matchQ;
       });
 
-      if (!filtered.length) {
-        gridEl.innerHTML = `<div class="card">${t.emptyText}</div>`;
-        return;
-      }
+      const starSvg = `<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2Z"/></svg>`;
+      const mapSvg = `<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 14.5 9 2.5 2.5 0 0 1 12 11.5Z"/></svg>`;
 
-      gridEl.innerHTML = filtered
-        .map((p) => {
-          const isFav = favorites.includes(p.id);
-          const catLabel = t.cats[p.category] || p.category;
-          return `
-            <article class="card" data-place-id="${p.id}">
-              <div>
-                <h2>${p.name}</h2>
-                <span class="tag">${catLabel}</span>
-                <p class="meta">${t.locationLabel} ${p.city}</p>
-              </div>
-              <div class="card-actions">
-                <span class="pi-accepted">${t.acceptsPi}</span>
-                <button type="button" class="fav-btn ${isFav ? "saved" : ""}" data-fav-id="${p.id}">
-                  ${isFav ? t.savedBtn : t.saveBtn}
-                </button>
-              </div>
-            </article>
-          `;
-        })
-        .join("");
-
-      if (syncOpenModal && selectedPlaceId !== null) {
-        openPlaceModal(selectedPlaceId, true);
-      }
+      document.getElementById("placesGrid").innerHTML = filtered.map(p => {
+        const isSaved = favs.includes(p.id);
+        const startPrice = p.products && p.products[0] ? p.products[0].price : 0.1;
+        return `
+          <div class="card">
+            <div>
+              <span class="tag">${t[p.cat] || p.cat}</span>
+              <h3 class="title" onclick="openPlace(${p.id})">${p.name}</h3>
+              <p class="loc">${p.loc} • ${startPrice} Pi</p>
+            </div>
+            <div class="card-actions">
+              <button class="fav-btn ${isSaved ? "saved" : ""}" onclick="toggleFav(${p.id})">
+                ${starSvg}<span>${isSaved ? t.saved : t.save}</span>
+              </button>
+              <button class="open-btn" onclick="openPlace(${p.id})">
+                ${mapSvg}<span>${t.details}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
     }
 
-    function triggerDemoPayment(amount, itemTitle) {
-      const t = i18n[currentLang];
-      const suffix = currentLang === "zh" ? "）" : ")";
-      setStatus(t.demoPayPrefix + amount + t.demoPayFor + itemTitle + suffix);
-    }
-
-    gridEl.addEventListener("click", (e) => {
-      const favBtn = e.target.closest("[data-fav-id]");
-      if (favBtn) {
-        e.stopPropagation();
-        const id = Number(favBtn.dataset.favId);
-        favorites = favorites.includes(id)
-          ? favorites.filter((x) => x !== id)
-          : [...favorites, id];
-        renderPlaces(false);
-        setStatus(i18n[currentLang].favUpdatedMsg);
-        return;
-      }
-
-      const card = e.target.closest("[data-place-id]");
-      if (card) {
-        const id = Number(card.dataset.placeId);
-        const place = places.find((p) => p.id === id);
-        openPlaceModal(id, true);
-        if (place) {
-          setStatus(place.name);
-        }
-      }
-    });
-
-    modalEl.addEventListener("click", (e) => {
-      if (e.target === modalEl || e.target.closest("#closeModalBtn")) {
-        closeModal();
-        return;
-      }
-      const payBtn = e.target.closest(".buy-pi-btn");
-      if (payBtn) {
-        triggerDemoPayment(payBtn.dataset.amount, payBtn.dataset.item);
-      }
-    });
-
-    langBarEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".lang-btn");
-      if (!btn) return;
-      currentLang = btn.dataset.lang;
-      renderPlaces(true);
-    });
-
-    catBarEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".cat-btn");
-      if (!btn) return;
-      document.querySelectorAll("#categoryBar .cat-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeCategory = btn.dataset.cat;
-      renderPlaces(false);
-      const catText = i18n[currentLang].cats[activeCategory] || activeCategory;
-      setStatus(i18n[currentLang].catMsg + catText);
-    });
-
-    searchEl.addEventListener("input", (e) => {
-      searchQuery = e.target.value;
-      renderPlaces(false);
-    });
-
-    piTestPayBtn.addEventListener("click", () => {
-      setStatus(i18n[currentLang].testPayMsg);
-    });
-
-    piLoginBtn.addEventListener("click", async () => {
-      const t = i18n[currentLang];
-      setStatus(t.piLoggingIn);
-      if (!window.Pi) {
-        setStatus(t.piSdkMissing);
-        return;
-      }
-      try {
-        window.Pi.init({ version: "2.0", sandbox: true });
-        const auth = await window.Pi.authenticate(["username", "payments"], () => {});
-        piUser = auth.user || null;
-        renderPlaces(selectedPlaceId !== null);
-        const username = piUser && piUser.username ? piUser.username : "Pioneer";
-        setStatus(t.piLoginSuccess + username);
-      } catch (err) {
-        const msg = err && err.message ? err.message : String(err);
-        setStatus(t.piLoginFail + msg);
-      }
-    });
-
-    renderPlaces(false);
-    setStatus(i18n[currentLang].readyMsg);
+    setLang("ar");
   </script>
 </body>
 </html>
