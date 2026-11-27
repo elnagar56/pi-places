@@ -235,8 +235,15 @@
     </div>
   </div>
 
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    const BACKEND_URL = "https://pi-places-backend.vercel.app";
+
+    if (window.Pi) {
+      window.Pi.init({ version: "2.0" });
+    }
+
     const places = [
       {
         id: 1, name: "واحة البن للقهوة", cat: "cafe", loc: "القاهرة", lat: 30.0444, lng: 31.2357,
@@ -288,7 +295,10 @@
         pay: "دفع Pi",
         close: "إغلاق",
         demoMsg: "وضع تجريبي: تم محاكاة دفع {amount} Pi لـ {name} بدون فتح المحفظة.",
-        loginMsg: "تم تسجيل الدخول التجريبي بحساب Pi داخل التطبيق."
+        loginMsg: "تم تسجيل الدخول التجريبي بحساب Pi داخل التطبيق.",
+        piLoginSuccess: "تم تسجيل الدخول بحساب Pi بنجاح.",
+        piPaySuccess: "تم إتمام دفع {amount} Pi لـ {name} بنجاح.",
+        piPayError: "تعذر إتمام عملية الدفع عبر Pi."
       },
       en: {
         title: "Pi Places",
@@ -309,7 +319,10 @@
         pay: "Pay Pi",
         close: "Close",
         demoMsg: "Demo mode: Simulated {amount} Pi payment for {name} without opening Wallet.",
-        loginMsg: "Demo Pi sign-in activated inside the app."
+        loginMsg: "Demo Pi sign-in activated inside the app.",
+        piLoginSuccess: "Signed in with Pi successfully.",
+        piPaySuccess: "Completed {amount} Pi payment for {name}.",
+        piPayError: "Could not complete Pi payment."
       },
       zh: {
         title: "Pi Places",
@@ -330,7 +343,10 @@
         pay: "Pi 支付",
         close: "关闭",
         demoMsg: "演示模式：已为 {name} 模拟支付 {amount} Pi（未打开钱包）。",
-        loginMsg: "已在应用内激活 Pi 演示登录。"
+        loginMsg: "已在应用内激活 Pi 演示登录。",
+        piLoginSuccess: "Pi 登录成功。",
+        piPaySuccess: "已完成向 {name} 支付 {amount} Pi。",
+        piPayError: "无法完成 Pi 支付。"
       }
     };
 
@@ -371,10 +387,83 @@
       document.getElementById("statusText").textContent = user ? (t.connected + user) : t.disconnected;
     }
 
-    function piLogin() {
+    async function onIncompletePaymentFound(payment) {
+      try {
+        const paymentId = payment && payment.identifier;
+        const txid = payment && payment.transaction && payment.transaction.txid;
+        if (paymentId && txid) {
+          await fetch(`${BACKEND_URL}/complete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId, txid })
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function piLogin() {
+      if (window.Pi && typeof window.Pi.authenticate === "function") {
+        try {
+          const auth = await window.Pi.authenticate(["username", "payments"], onIncompletePaymentFound);
+          user = auth && auth.user && auth.user.username ? `@${auth.user.username}` : "@pi_user";
+          updateStatus();
+          showToast(i18n[lang].piLoginSuccess);
+          return;
+        } catch (err) {
+          console.error(err);
+        }
+      }
       user = "@tamer_pi";
       updateStatus();
       showToast(i18n[lang].loginMsg);
+    }
+
+    function payWithPi(name, amount) {
+      closeModal();
+      const numAmount = Number(amount);
+
+      if (!window.Pi || typeof window.Pi.createPayment !== "function") {
+        const msg = i18n[lang].demoMsg.replace("{amount}", numAmount).replace("{name}", name);
+        showToast(msg);
+        return;
+      }
+
+      window.Pi.createPayment(
+        {
+          amount: numAmount,
+          memo: name,
+          metadata: { item: name, app: "pi-places" }
+        },
+        {
+          onReadyForServerApproval: async function (paymentId) {
+            await fetch(`${BACKEND_URL}/approve`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentId })
+            });
+          },
+          onReadyForServerCompletion: async function (paymentId, txid) {
+            await fetch(`${BACKEND_URL}/complete`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentId, txid })
+            });
+            const doneMsg = i18n[lang].piPaySuccess
+              .replace("{amount}", numAmount)
+              .replace("{name}", name);
+            showToast(doneMsg);
+          },
+          onCancel: function () {
+            showToast(i18n[lang].piPayError);
+          },
+          onError: function (error) {
+            console.error(error);
+            showToast(i18n[lang].piPayError);
+          }
+        }
+      );
     }
 
     function demoPay(name, amount) {
@@ -423,7 +512,7 @@
             <strong>${pr.name}</strong><br/>
             <span class="loc">${pr.price} Pi</span>
           </div>
-          <button class="pay-btn" onclick="demoPay('${p.name} - ${pr.name}', ${pr.price})">
+          <button class="pay-btn" onclick="payWithPi('${p.name.replace(/'/g, "\\'")} - ${pr.name.replace(/'/g, "\\'")}', ${pr.price})">
             ${t.pay}
           </button>
         </div>
