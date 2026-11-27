@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#5c2d91" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <title>Pi Places — دليل الأماكن الداعمة لـ Pi</title>
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     :root {
@@ -414,10 +413,7 @@
         testPayMsg: "وضع تجريبي: تم الضغط على زر تجربة دفع 0.01 Pi.",
         demoPayPrefix: "وضع تجريبي: دفع ",
         demoPayFor: " Pi مقابل (",
-        piSdkMissing: "تنبيه: افتح التطبيق داخل Pi Browser لتسجيل الدخول بحساب Pi.",
-        piLoggingIn: "جاري تسجيل الدخول عبر Pi...",
-        piLoginSuccess: "تم الدخول بحساب Pi: ",
-        piLoginFail: "تعذر تسجيل الدخول عبر Pi: "
+        piLoginDone: "وضع تجريبي: تم تفعيل تسجيل الدخول بحساب Pi."
       },
       en: {
         dir: "ltr",
@@ -453,10 +449,7 @@
         testPayMsg: "Demo mode: Test Pay 0.01 Pi button clicked.",
         demoPayPrefix: "Demo mode: Pay ",
         demoPayFor: " Pi for (",
-        piSdkMissing: "Notice: Open inside Pi Browser to sign in with Pi.",
-        piLoggingIn: "Signing in with Pi...",
-        piLoginSuccess: "Signed in with Pi: ",
-        piLoginFail: "Pi sign-in failed: "
+        piLoginDone: "Demo mode: Pi sign-in button activated."
       },
       zh: {
         dir: "ltr",
@@ -492,10 +485,7 @@
         testPayMsg: "演示模式：已点击测试支付 0.01 Pi 按钮。",
         demoPayPrefix: "演示模式：支付 ",
         demoPayFor: " Pi 购买（",
-        piSdkMissing: "提示：请在 Pi Browser 中打开以使用 Pi 登录。",
-        piLoggingIn: "正在使用 Pi 登录...",
-        piLoginSuccess: "已使用 Pi 登录：",
-        piLoginFail: "Pi 登录失败："
+        piLoginDone: "演示模式：已触发 Pi 登录按钮。"
       }
     };
 
@@ -558,7 +548,7 @@
     let favorites = [];
     let activeCategory = "الكل";
     let searchQuery = "";
-    let piUser = null;
+    let piConnected = false;
     let selectedPlaceId = null;
     let leafletMap = null;
 
@@ -590,12 +580,7 @@
       searchEl.placeholder = t.searchPlaceholder;
       piLoginBtn.textContent = t.piLogin;
       piTestPayBtn.textContent = t.piPay;
-
-      if (piUser && piUser.username) {
-        piStatusText.textContent = t.piConnected + piUser.username;
-      } else {
-        piStatusText.textContent = t.piDisconnected;
-      }
+      piStatusText.textContent = piConnected ? t.piConnected + "Pioneer" : t.piDisconnected;
 
       document.querySelectorAll("#categoryBar .cat-btn").forEach((btn) => {
         const key = btn.dataset.cat;
@@ -608,12 +593,12 @@
     }
 
     function initMap(lat, lng, title) {
-      if (leafletMap) {
-        leafletMap.remove();
-        leafletMap = null;
-      }
-      if (!window.L || !document.getElementById("placeMap")) return;
       try {
+        if (leafletMap) {
+          leafletMap.remove();
+          leafletMap = null;
+        }
+        if (!window.L || !document.getElementById("placeMap")) return;
         leafletMap = L.map("placeMap").setView([lat, lng], 14);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap"
@@ -678,7 +663,9 @@
     function closeModal() {
       selectedPlaceId = null;
       if (leafletMap) {
-        leafletMap.remove();
+        try {
+          leafletMap.remove();
+        } catch (e) {}
         leafletMap = null;
       }
       modalEl.classList.remove("open");
@@ -802,24 +789,10 @@
       setStatus(i18n[currentLang].testPayMsg);
     });
 
-    piLoginBtn.addEventListener("click", async () => {
-      const t = i18n[currentLang];
-      setStatus(t.piLoggingIn);
-      if (!window.Pi) {
-        setStatus(t.piSdkMissing);
-        return;
-      }
-      try {
-        window.Pi.init({ version: "2.0", sandbox: true });
-        const auth = await window.Pi.authenticate(["username", "payments"], () => {});
-        piUser = auth.user || null;
-        renderPlaces(selectedPlaceId !== null);
-        const username = piUser && piUser.username ? piUser.username : "Pioneer";
-        setStatus(t.piLoginSuccess + username);
-      } catch (err) {
-        const msg = err && err.message ? err.message : String(err);
-        setStatus(t.piLoginFail + msg);
-      }
+    piLoginBtn.addEventListener("click", () => {
+      piConnected = true;
+      renderPlaces(selectedPlaceId !== null);
+      setStatus(i18n[currentLang].piLoginDone);
     });
 
     renderPlaces(false);
