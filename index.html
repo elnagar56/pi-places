@@ -67,12 +67,13 @@
     .toast {
       max-width: 900px;
       margin: 12px auto 0;
-      padding: 10px 14px;
+      padding: 12px 14px;
       border-radius: 10px;
       background: #fff7db;
       border: 1px solid #ecd27a;
       color: #4a3700;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
+      font-weight: 600;
       display: none;
     }
     .controls {
@@ -343,6 +344,7 @@
       const box = document.getElementById("toastBox");
       box.textContent = msg;
       box.style.display = "block";
+      box.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
     function setLang(newLang) {
@@ -379,6 +381,7 @@
       closeModal();
       const msg = i18n[lang].demoMsg.replace("{amount}", amount).replace("{name}", name);
       showToast(msg);
+      alert(msg);
     }
 
     function toggleFav(id) {
